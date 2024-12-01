@@ -24,6 +24,14 @@ public class ImageController {
         return imageService.getImages();
     }
 
+    @PostMapping(value = "/process-strings", consumes = MediaType.APPLICATION_NDJSON_VALUE, produces = MediaType.APPLICATION_NDJSON_VALUE)
+    public Flux<String> processStrings(@RequestBody Flux<String> inputStrings) {
+        return inputStrings
+                .doOnNext(str -> System.out.println("Received: " + str))
+                .map(String::toUpperCase)
+                .doOnNext(str -> System.out.println("Processed: " + str));
+    }
+
     @GetMapping("/{id}")
     public byte[] getImage(@PathVariable int id) {
         return imageService.getImageData(id);
