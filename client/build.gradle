@@ -1,5 +1,7 @@
 plugins {
 	id 'java'
+	id 'application'
+	id 'org.openjfx.javafxplugin' version '0.0.13'
 	id 'org.springframework.boot' version '3.4.0'
 	id 'io.spring.dependency-management' version '1.1.6'
 }
@@ -15,6 +17,11 @@ java {
 
 repositories {
 	mavenCentral()
+}
+
+javafx {
+	version = "21"
+	modules = [ 'javafx.controls', 'javafx.fxml' ]
 }
 
 dependencies {

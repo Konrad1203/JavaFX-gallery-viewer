@@ -7,6 +7,7 @@ import reactor.core.publisher.Flux;
 
 @Component
 public class ServerClient {
+
     private final WebClient webClient;
 
     public ServerClient(WebClient.Builder webClientBuilder) {

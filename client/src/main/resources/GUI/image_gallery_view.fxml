@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane prefHeight="600.0" prefWidth="900.0"
+            xmlns="http://javafx.com/javafx/17.0.12"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="pl.edu.agh.to.reaktywni.GUI.ImageGalleryPresenter">
+    <top>
+        <VBox prefWidth="100.0" BorderPane.alignment="CENTER">
+            <Label prefHeight="26.0" text="Zaimportów swoje zdjęcia do aplikacji " textAlignment="CENTER">
+                <font>
+                    <Font size="14.0" />
+                </font>
+                <VBox.margin>
+                    <Insets bottom="5.0" />
+                </VBox.margin>
+            </Label>
+            <HBox prefWidth="200.0" spacing="15.0">
+                <VBox.margin>
+                    <Insets />
+                </VBox.margin>
+                <Button mnemonicParsing="false" onAction="#openSelectionWindow" text="Wybierz obrazy " />
+                <Button onAction="#sendImages" mnemonicParsing="false" text="Wyślij" />
+            </HBox>
+            <Label fx:id="filesSelectedLabel" text="Wybrano x elementów" visible="false" />
+            <BorderPane.margin>
+                <Insets bottom="10.0" />
+            </BorderPane.margin>
+        </VBox>
+    </top>
+    <center>
+        <ScrollPane fitToWidth="true" BorderPane.alignment="CENTER">
+            <GridPane fx:id="gridPane" alignment="CENTER" hgap="20.0" prefHeight="480.0" vgap="20.0" BorderPane.alignment="CENTER">
+                <columnConstraints>
+                    <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" prefWidth="100.0" />
+                    <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" prefWidth="100.0" />
+                    <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" prefWidth="100.0" />
+                    <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" percentWidth="25.0" prefWidth="100.0" />
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints maxHeight="160.0" minHeight="160.0" prefHeight="160.0" vgrow="SOMETIMES" />
+                    <RowConstraints maxHeight="160.0" minHeight="160.0" prefHeight="160.0" vgrow="SOMETIMES" />
+                    <RowConstraints maxHeight="160.0" minHeight="160.0" prefHeight="160.0" vgrow="SOMETIMES" />
+                </rowConstraints>
+                <BorderPane.margin>
+                    <Insets />
+                </BorderPane.margin>
+            </GridPane>
+        </ScrollPane>
+    </center>
+    <opaqueInsets>
+        <Insets />
+    </opaqueInsets>
+    <padding>
+        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+    </padding>
+</BorderPane>

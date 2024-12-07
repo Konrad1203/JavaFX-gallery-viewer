@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class MiPt1500ReaktywniApplication {
+public class ReaktywniServerApp {
 
 	public static void main(String[] args) {
-		SpringApplication.run(MiPt1500ReaktywniApplication.class, args);
+		SpringApplication.run(ReaktywniServerApp.class, args);
 	}
 
 }
