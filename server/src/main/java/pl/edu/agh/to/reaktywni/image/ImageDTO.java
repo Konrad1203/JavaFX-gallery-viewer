@@ -1,7 +1,16 @@
 package pl.edu.agh.to.reaktywni.image;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+
+@Builder
+@AllArgsConstructor
+@Getter
 public class ImageDTO {
     private int idOfPutting;
+    @Setter
     private String name;
     private String extensionType;
     private int width;
@@ -10,31 +19,4 @@ public class ImageDTO {
 
     public ImageDTO() {}
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getIdOfPutting() {
-        return idOfPutting;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getExtensionType() {
-        return extensionType;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public byte[] getImageData() {
-        return data;
-    }
 }

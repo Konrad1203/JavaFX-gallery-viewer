@@ -20,6 +20,7 @@ import reactor.core.publisher.Flux;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -82,7 +83,11 @@ public class ImageGalleryPresenter {
 
         System.out.println("Wyslam obrazy: " + images.size());
         serverClient.sendImages(Flux.fromIterable(images))
-                .doOnNext(processed -> System.out.println("Otrzymano: " + processed.getName()))
+                .doOnNext(processed -> {
+                    System.out.println("Otrzymano: " + processed.getName());
+                    System.out.println("Width: " + processed.getWidth() + "\tHeight: " + processed.getHeight());
+                    //System.out.println("Data" + Arrays.toString(processed.getData()));
+                })
                 .blockLast();
 
         //todo

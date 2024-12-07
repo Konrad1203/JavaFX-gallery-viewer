@@ -6,7 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import pl.edu.agh.to.reaktywni.util.ImageResizer;
+import pl.edu.agh.to.reaktywni.util.Resizable;
 import reactor.core.publisher.Flux;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 
 @RestController
@@ -26,16 +31,26 @@ public class ImageController {
 
     @PostMapping(consumes = MediaType.APPLICATION_NDJSON_VALUE, produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Flux<ImageDTO> processImages(@RequestBody Flux<ImageDTO> images) {
+        Resizable imageResizer = new ImageResizer();
         return images
                 .doOnNext(imageDTO -> {
                     System.out.println("Received image: " + imageDTO.getName());
-                    String newName = imageDTO.getName().toUpperCase();
-                    imageDTO.setName(newName);
+                    System.out.println("Width: " + imageDTO.getWidth() + "\tHeight: " + imageDTO.getHeight());
+                    //System.out.println("Data: " + Arrays.toString(imageDTO.getData()));
+                    imageDTO.setName(imageDTO.getName().toUpperCase());
                 })
-                .doOnNext(imageDTO -> System.out.println("Processed image: " + imageDTO.getName()));
+                .map(imageDTO -> {
+                    try {
+                        return imageResizer.resize(imageDTO, 100, 100);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .doOnNext(imageDTO -> {
+                    System.out.println("Processed image: " + imageDTO.getName());
+                    System.out.println("Width: " + imageDTO.getWidth() + "\tHeight: " + imageDTO.getHeight());
+                    });
     }
-
-
 
     @GetMapping("/{id}")
     public byte[] getImage(@PathVariable int id) {

@@ -73,6 +73,7 @@ public class ImageDTO {
     public String getExtensionType() { return extensionType; }
     public int getWidth(){ return width; }
     public int getHeight(){ return height; }
-    public byte[] getImageData() { return data; }
+    public byte[] getData() { return data; }
+    public void setData(byte[] data) {this.data = data; }
 }
 
