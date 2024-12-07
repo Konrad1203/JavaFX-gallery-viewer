@@ -20,14 +20,4 @@ public class ReaktywniClientApplication {
 	public static void main(String[] args) {
 		Application.launch(ImageGalleryApp.class, args);
 	}
-	/*
-	@Override
-	public void run(String... args) {
-		List<String> strings = List.of("hello", "world", "reactive", "spring", "boot", "webflux", "flux", "mono", "client", "server");
-
-		serverClient.sendStrings(Flux.fromIterable(strings))
-				.doOnNext(processed -> System.out.println("Received from server: " + processed))
-				.blockLast();
-	}
-	 */
 }

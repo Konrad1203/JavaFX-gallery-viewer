@@ -12,26 +12,30 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.springframework.stereotype.Component;
+import pl.edu.agh.to.reaktywni.ServerClient;
+import reactor.core.publisher.Flux;
 
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
+@Component
 public class ImageGalleryPresenter {
-
     @FXML
     private Label filesSelectedLabel;
 
     @FXML
     private GridPane gridPane;
-
     private Stage primaryStage;
-
     private int row = 0;
     private int col = 0;
-
     private List<File> files;
+    private final ServerClient serverClient;
 
+    public ImageGalleryPresenter(ServerClient serverClient) {
+        this.serverClient = serverClient;
+    }
 
     public void setPrimaryStage(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -52,8 +56,20 @@ public class ImageGalleryPresenter {
     }
 
     public void sendImages(ActionEvent actionEvent) {
-        if (files != null) {
+        //testOfInsertingImages();
+        sendingPipeline();
+    }
 
+    public void sendingPipeline(){
+		List<String> strings = List.of("hello\n", "world\n", "reactive\n", "spring\n");
+
+		serverClient.sendStrings(Flux.fromIterable(strings))
+				.doOnNext(processed -> System.out.println("Received from server: " + processed))
+				.blockLast();
+    }
+
+    private void testOfInsertingImages() {
+        if (files != null) {
             // TYMCZASOWY WĄTEK DO WSTAWIANIA OBRAZÓW
             new Thread(() -> {
                 addPlaceholdersToGrid(files.size());
@@ -72,7 +88,7 @@ public class ImageGalleryPresenter {
         for (File file : files) {
             System.out.println(file.getName());
             try {
-                Image image = new Image(file.toURI().toString(), 200, 180, true, false);
+                Image image = new Image(file.toURI().toString(), 200, 120, true, false);
                 placeInGrid(image, file.getName());
             } catch (Exception ex) {
                 ex.printStackTrace();
