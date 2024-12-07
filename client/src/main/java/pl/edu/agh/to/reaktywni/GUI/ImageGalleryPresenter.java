@@ -60,10 +60,36 @@ public class ImageGalleryPresenter {
 
     public void sendImages(ActionEvent actionEvent) {
         //testOfInsertingImages();
-        sendingPipeline();
+        //sendingPipelineTest();
+        sendImagesPipeline();
     }
 
-    public void sendingPipeline(){
+    public void sendImagesPipeline(){
+        if(files == null || files.isEmpty()) return;
+
+        int positionCounter = 0;
+        List<ImageDTO> images = new ArrayList<>();
+
+        for (File file : files) {
+            try {
+                images.add(new ImageDTO(positionCounter++, file));
+            } catch (IOException e) {
+                System.out.println("Blad przy przetwarzaniu pliku: " + file.getAbsolutePath());
+                e.printStackTrace();
+            }
+        }
+
+
+        System.out.println("Wyslam obrazy: " + images.size());
+        serverClient.sendImages(Flux.fromIterable(images))
+                .doOnNext(processed -> System.out.println("Otrzymano: " + processed.getName()))
+                .blockLast();
+
+        //todo
+        //files.clear();
+    }
+
+    public void sendingPipelineTest(){
         List<String> paths = List.of(
                 "C:\\Users\\Mateusz\\Desktop\\hotdogi\\1001.png",
                 "C:\\Users\\Mateusz\\Desktop\\hotdogi\\1002.png"
