@@ -11,6 +11,8 @@ import pl.edu.agh.to.reaktywni.util.ImageResizer;
 import pl.edu.agh.to.reaktywni.util.Resizable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -36,21 +38,13 @@ public class ImageController {
     @PostMapping(consumes = MediaType.APPLICATION_NDJSON_VALUE, produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Flux<ImageDTO> processImages(@RequestBody Flux<ImageDTO> images) {
         return images
-                .doOnNext(imageDTO -> {
-                    System.out.println("Received image: " + imageDTO.getName());
-                    System.out.println("Width: " + imageDTO.getWidth() + "\tHeight: " + imageDTO.getHeight());
-                    //System.out.println("Data: " + Arrays.toString(imageDTO.getData()));
-                    imageDTO.setName(imageDTO.getName().toUpperCase());
-                })
-                .map(imageDTO -> imageResizer.resize(imageDTO, 100, 100))
-                .flatMap(optionalImageDTO -> {
-                    if (optionalImageDTO.isPresent()) {
-                        return Mono.just(optionalImageDTO.get());
-                    } else {
-                        return Mono.error(new IllegalArgumentException("Failed to resize image: " + optionalImageDTO));
-                    }
-                })
-                .doOnNext(imageDTO -> {
+                .doOnNext(imageDTO -> System.out.println("Received image: " + imageDTO.getName() + "\tWidth: " + imageDTO.getWidth() + "\tHeight: " + imageDTO.getHeight()))
+                .flatMap(imageDTO -> Mono.fromCallable(() -> imageResizer.resize(imageDTO, 100, 100))
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .flatMap(optionalImageDTO -> Mono.justOrEmpty(optionalImageDTO)
+                                .switchIfEmpty(Mono.error(new IllegalArgumentException("Failed to resize image: " + imageDTO.getName())))
+                        )
+                ).doOnNext(imageDTO -> {
                     System.out.println("Processed image: " + imageDTO.getName());
                     System.out.println("Width: " + imageDTO.getWidth() + "\tHeight: " + imageDTO.getHeight());
                 });
