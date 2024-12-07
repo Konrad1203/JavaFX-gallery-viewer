@@ -14,9 +14,12 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 import pl.edu.agh.to.reaktywni.ServerClient;
+import pl.edu.agh.to.reaktywni.model.ImageDTO;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -61,10 +64,31 @@ public class ImageGalleryPresenter {
     }
 
     public void sendingPipeline(){
-		List<String> strings = List.of("hello\n", "world\n", "reactive\n", "spring\n");
+        List<String> paths = List.of(
+                "C:\\Users\\Mateusz\\Desktop\\hotdogi\\1001.png",
+                "C:\\Users\\Mateusz\\Desktop\\hotdogi\\1002.png"
+        );
 
-		serverClient.sendStrings(Flux.fromIterable(strings))
-				.doOnNext(processed -> System.out.println("Received from server: " + processed))
+        List<ImageDTO> images = new ArrayList<>();
+
+        for(String path : paths){
+            File file = new File(path);
+            if (!file.exists()) {
+                System.out.println("Plik nie istnieje: " + file.getAbsolutePath());
+                return;
+            } else {
+                try {
+                    images.add(new ImageDTO(1, file));
+                } catch (IOException e) {
+                    System.out.println("Blad przy przetwarzaniu pliku: " + file.getAbsolutePath());
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        System.out.println("Wyslam obrazy: " + images.size());
+        serverClient.sendImages(Flux.fromIterable(images))
+				.doOnNext(processed -> System.out.println("Otrzymano: " + processed.getName()))
 				.blockLast();
     }
 

@@ -24,13 +24,18 @@ public class ImageController {
         return imageService.getImages();
     }
 
-    @PostMapping(value = "/process-strings", consumes = MediaType.APPLICATION_NDJSON_VALUE, produces = MediaType.APPLICATION_NDJSON_VALUE)
-    public Flux<String> processStrings(@RequestBody Flux<String> inputStrings) {
-        return inputStrings
-                .doOnNext(str -> System.out.println("Received: " + str))
-                .map(String::toUpperCase)
-                .doOnNext(str -> System.out.println("Processed: " + str));
+    @PostMapping(consumes = MediaType.APPLICATION_NDJSON_VALUE, produces = MediaType.APPLICATION_NDJSON_VALUE)
+    public Flux<ImageDTO> processImages(@RequestBody Flux<ImageDTO> images) {
+        return images
+                .doOnNext(imageDTO -> {
+                    System.out.println("Received image: " + imageDTO.getName());
+                    String newName = imageDTO.getName().toUpperCase();
+                    imageDTO.setName(newName);
+                })
+                .doOnNext(imageDTO -> System.out.println("Processed image: " + imageDTO.getName()));
     }
+
+
 
     @GetMapping("/{id}")
     public byte[] getImage(@PathVariable int id) {

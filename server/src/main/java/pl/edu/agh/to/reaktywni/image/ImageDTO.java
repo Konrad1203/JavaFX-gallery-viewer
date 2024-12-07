@@ -1,30 +1,21 @@
-package pl.edu.agh.to.reaktywni.model;
+package pl.edu.agh.to.reaktywni.image;
 
-import java.util.Set;
-
-public class Image {
-
-    private int id;
+public class ImageDTO {
+    private int idOfPutting;
     private String name;
     private String extensionType;
     private int width;
     private int height;
     private byte[] data;
-    private Set<Thumbnail> thumbnails;
 
+    public ImageDTO() {}
 
-    public Image() {}
-
-    public Image(String name, String extensionType, int width, int height, byte[] data) {
+    public void setName(String name) {
         this.name = name;
-        this.extensionType = extensionType;
-        this.width = width;
-        this.height = height;
-        this.data = data;
     }
 
-    public int getId() {
-        return id;
+    public int getIdOfPutting() {
+        return idOfPutting;
     }
 
     public String getName() {
