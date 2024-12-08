@@ -3,9 +3,9 @@ package pl.edu.agh.to.reaktywni.model;
 import org.springframework.stereotype.Component;
 import pl.edu.agh.to.reaktywni.ServerClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,12 +22,11 @@ public class ImagePipeline {
 
         List<ImageDTO> images = convertFilesToImages(files, positionCounter);
 
-        System.out.println("Wyslam obrazy: " + images.size());
+        System.out.println("Wysylam obrazy: " + images.size());
         serverClient.sendImages(Flux.fromIterable(images))
                 .doOnNext(processed -> {
                     System.out.println("Otrzymano: " + processed.getName());
                     System.out.println("Width: " + processed.getWidth() + "\tHeight: " + processed.getHeight());
-                    //System.out.println("Data" + Arrays.toString(processed.getData()));
                 })
                 .blockLast();
     }
@@ -35,14 +34,18 @@ public class ImagePipeline {
     private List<ImageDTO> convertFilesToImages(List<File> files, int positionCounter) {
         List<ImageDTO> images = new ArrayList<>();
         for (File file : files) {
-            try {
-                images.add(new ImageDTO(positionCounter++, file));
-            } catch (IOException e) {
-                System.out.println("Blad przy przetwarzaniu pliku: " + file.getAbsolutePath());
-                e.printStackTrace();
-            }
+            images.add(ImageDTO.createFromFile(file));
+            positionCounter++;
         }
         return images;
+    }
+
+    public Flux<ImageDTO> getThumbnails() {
+        return serverClient.getThumbnails();
+    }
+
+    public Mono<Long> getImagesCount() {
+        return serverClient.getImagesCount();
     }
 
     public void sendTestImages(List<File> files) {
@@ -59,12 +62,7 @@ public class ImagePipeline {
                 System.out.println("Plik nie istnieje: " + file.getAbsolutePath());
                 return;
             } else {
-                try {
-                    images.add(new ImageDTO(1, file));
-                } catch (IOException e) {
-                    System.out.println("Blad przy przetwarzaniu pliku: " + file.getAbsolutePath());
-                    e.printStackTrace();
-                }
+                images.add(ImageDTO.createFromFile(file));
             }
         }
 

@@ -17,7 +17,7 @@ public class ImageGalleryApp extends Application {
 
     @Override
     public void init() {
-        applicationContext = new SpringApplicationBuilder(ReaktywniClientApplication.class).run();
+        applicationContext = new SpringApplicationBuilder(ReaktywniClientApp.class).run();
     }
 
     @Override

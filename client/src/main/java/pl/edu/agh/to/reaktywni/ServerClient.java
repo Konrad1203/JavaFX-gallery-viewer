@@ -4,10 +4,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import pl.edu.agh.to.reaktywni.model.ImageDTO;
-import pl.edu.agh.to.reaktywni.util.ImageDTOArrayEncoder;
+import pl.edu.agh.to.reaktywni.util.Base64ImageDataEncoder;
 import reactor.core.publisher.Flux;
-
-import java.util.Base64;
+import reactor.core.publisher.Mono;
 
 @Component
 public class ServerClient {
@@ -19,7 +18,7 @@ public class ServerClient {
     }
 
     public Flux<ImageDTO> sendImages(Flux<ImageDTO> images) {
-        images.map(ImageDTOArrayEncoder::encode);
+        images.map(Base64ImageDataEncoder::encode);
 
         return webClient.post()
                 .uri("/images")
@@ -28,6 +27,23 @@ public class ServerClient {
                 .retrieve()
                 .bodyToFlux(ImageDTO.class)
                 .doOnError(e -> System.err.println("Error: " + e.getMessage()));
+    }
+
+    public Flux<ImageDTO> getThumbnails() {
+        return webClient.get()
+                .uri("/images")
+                .retrieve()
+                .bodyToFlux(ImageDTO.class)
+                .doOnError(e -> System.err.println("Error: " + e.getMessage()));
+    }
+
+    public Mono<Long> getImagesCount() {
+        return webClient.get()
+                .uri("/images/count")
+                .retrieve()
+                .bodyToMono(Long.class)
+                .doOnError(e -> System.err.println("Error: " + e.getMessage()));
+
     }
 }
 

@@ -20,6 +20,11 @@ public class ImageController {
         return imageService.getImages();
     }
 
+    @GetMapping("/count")
+    public long getImagesCount() {
+        return imageService.getImagesCount();
+    }
+
     @PostMapping(consumes = MediaType.APPLICATION_NDJSON_VALUE, produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Flux<ImageDTO> processImages(@RequestBody Flux<ImageDTO> images) {
         return imageService.processImages(images);
@@ -27,7 +32,7 @@ public class ImageController {
 
     @GetMapping("/{id}")
     public byte[] getImage(@PathVariable int id) {
-        return imageService.getImageData(id);
+        return imageService.getImage(id);
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

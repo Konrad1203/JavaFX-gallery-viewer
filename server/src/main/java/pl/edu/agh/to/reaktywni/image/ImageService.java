@@ -10,11 +10,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Service
 public class ImageService {
@@ -48,37 +43,26 @@ public class ImageService {
         return image.getId();
     }
 
+    public byte[] getImage(int id) {
+        return imageRepository.findById(id).map(Image::getImageData).orElse(null);
+    }
+
     public void saveThumbnail(Thumbnail thumbnail) {
         thumbnailRepository.save(thumbnail);
     }
 
-    private static final String UPLOAD_FOLDER = "uploads";
-
-    static {
-        File directory = new File(UPLOAD_FOLDER);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
-    }
 
     public ResponseEntity<String> saveImages(MultipartFile[] files) {
-
+        // TO DO
         System.out.println("Files uploaded: " + files.length);
-
         return ResponseEntity.ok("Files uploaded successfully!");
-    }
-
-    public byte[] getImageData(int id) {
-        try {
-            Path path = Paths.get(UPLOAD_FOLDER + File.separator + id);
-            return Files.readAllBytes(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     public Flux<Image> getImages() {
         return Flux.fromIterable(imageRepository.findAll());
+    }
+
+    public long getImagesCount() {
+        return imageRepository.count();
     }
 }

@@ -1,6 +1,5 @@
 package pl.edu.agh.to.reaktywni.GUI;
 
-import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -9,14 +8,16 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import pl.edu.agh.to.reaktywni.ImageGalleryApp;
+import pl.edu.agh.to.reaktywni.model.ImageDTO;
 
 import java.io.IOException;
-import java.net.URL;
+
 
 @Component
 public class StageInitializer implements ApplicationListener<ImageGalleryApp.StageReadyEvent> {
 
     private final ApplicationContext applicationContext;
+
 
     public StageInitializer(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -26,27 +27,41 @@ public class StageInitializer implements ApplicationListener<ImageGalleryApp.Sta
     public void onApplicationEvent(ImageGalleryApp.StageReadyEvent event) {
         Stage stage = event.getStage();
 
-        URL resource = getClass().getResource("/GUI/image_gallery_view.fxml");
-        if (resource == null) {
-            System.out.println("Plik FXML nie został znaleziony!");
-            throw new RuntimeException("FXML file not found: /GUI/image_gallery_view.fxml");
-        }
-
-        FXMLLoader loader = new FXMLLoader(resource);
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/image_gallery_view.fxml"));
         loader.setControllerFactory(applicationContext::getBean);
 
-        Parent root;
         try {
-            root = loader.load();
-        } catch (IOException e) {
-            System.out.println("Failed loading FXML file");
-            throw new RuntimeException(e);
-        }
+            Parent root = loader.load();
+            Scene scene = new Scene(root, 900, 600);
+            stage.setTitle("Image Gallery");
+            stage.setScene(scene);
+            stage.show();
 
-        Scene scene = new Scene(root, 900, 600);
-        stage.setTitle("Image Gallery");
-        stage.setScene(scene);
-        stage.show();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed loading FXML file: ", e);
+        }
+    }
+
+    public void openBigImageView(ImageDTO image) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/big_image_view.fxml"));
+            loader.setControllerFactory(applicationContext::getBean);
+            Parent root = loader.load();
+
+            BigImagePresenter presenter = loader.getController();
+            presenter.setImage(image.getData());
+            presenter.setName(image.getName());
+            presenter.setSize(image.getWidth(), image.getHeight());
+
+            Stage stage = new Stage();
+            stage.setTitle("Selected Image View");
+            stage.setScene(new Scene(root));
+            stage.setResizable(false);
+            stage.show();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed loading FXML file: ", e);
+        }
     }
 }
 
