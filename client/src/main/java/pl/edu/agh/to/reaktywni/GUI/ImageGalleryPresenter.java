@@ -15,12 +15,12 @@ import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 import pl.edu.agh.to.reaktywni.ServerClient;
 import pl.edu.agh.to.reaktywni.model.ImageDTO;
+import pl.edu.agh.to.reaktywni.model.ImagePipeline;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,10 +35,12 @@ public class ImageGalleryPresenter {
     private int row = 0;
     private int col = 0;
     private List<File> files;
-    private final ServerClient serverClient;
 
-    public ImageGalleryPresenter(ServerClient serverClient) {
+    private final ServerClient serverClient;
+    private final ImagePipeline imagePipeline;
+    public ImageGalleryPresenter(ServerClient serverClient, ImagePipeline imagePipeline) {
         this.serverClient = serverClient;
+        this.imagePipeline = imagePipeline;
     }
 
     public void setPrimaryStage(Stage primaryStage) {
@@ -66,61 +68,11 @@ public class ImageGalleryPresenter {
     }
 
     public void sendImagesPipeline(){
-        if(files == null || files.isEmpty()) return;
-
-        int positionCounter = 0;
-        List<ImageDTO> images = new ArrayList<>();
-
-        for (File file : files) {
-            try {
-                images.add(new ImageDTO(positionCounter++, file));
-            } catch (IOException e) {
-                System.out.println("Blad przy przetwarzaniu pliku: " + file.getAbsolutePath());
-                e.printStackTrace();
-            }
-        }
-
-
-        System.out.println("Wyslam obrazy: " + images.size());
-        serverClient.sendImages(Flux.fromIterable(images))
-                .doOnNext(processed -> {
-                    System.out.println("Otrzymano: " + processed.getName());
-                    System.out.println("Width: " + processed.getWidth() + "\tHeight: " + processed.getHeight());
-                    //System.out.println("Data" + Arrays.toString(processed.getData()));
-                })
-                .blockLast();
-
-        //todo
-        //files.clear();
+        imagePipeline.sendImagesFromFiles(files, 0);
     }
 
     public void sendingPipelineTest(){
-        List<String> paths = List.of(
-                "C:\\Users\\Mateusz\\Desktop\\hotdogi\\1001.png",
-                "C:\\Users\\Mateusz\\Desktop\\hotdogi\\1002.png"
-        );
-
-        List<ImageDTO> images = new ArrayList<>();
-
-        for(String path : paths){
-            File file = new File(path);
-            if (!file.exists()) {
-                System.out.println("Plik nie istnieje: " + file.getAbsolutePath());
-                return;
-            } else {
-                try {
-                    images.add(new ImageDTO(1, file));
-                } catch (IOException e) {
-                    System.out.println("Blad przy przetwarzaniu pliku: " + file.getAbsolutePath());
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        System.out.println("Wyslam obrazy: " + images.size());
-        serverClient.sendImages(Flux.fromIterable(images))
-				.doOnNext(processed -> System.out.println("Otrzymano: " + processed.getName()))
-				.blockLast();
+        imagePipeline.sendTestImages(files);
     }
 
     private void testOfInsertingImages() {
