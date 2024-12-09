@@ -9,6 +9,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import pl.edu.agh.to.reaktywni.ImageGalleryApp;
 import pl.edu.agh.to.reaktywni.model.ImageDTO;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 
@@ -49,15 +50,18 @@ public class StageInitializer implements ApplicationListener<ImageGalleryApp.Sta
             Parent root = loader.load();
 
             BigImagePresenter presenter = loader.getController();
-            presenter.setImage(image.getData());
-            presenter.setName(image.getName());
-            presenter.setSize(image.getWidth(), image.getHeight());
 
             Stage stage = new Stage();
             stage.setTitle("Selected Image View");
             stage.setScene(new Scene(root));
             stage.setResizable(false);
             stage.show();
+
+            if (image == null) throw new RuntimeException("Failed loading image");
+            presenter.setName(image.getName());
+            presenter.setSize(image.getWidth(), image.getHeight());
+            presenter.setImage(image.getData());
+
 
         } catch (IOException e) {
             throw new RuntimeException("Failed loading FXML file: ", e);

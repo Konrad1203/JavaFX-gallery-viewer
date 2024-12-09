@@ -17,6 +17,21 @@ public class ServerClient {
         this.webClient = webClientBuilder.baseUrl("http://localhost:8080").build();
     }
 
+    public ImageDTO getFullImage(int id) {
+        ImageDTO imageDTO = webClient.get()
+            .uri("/images/{id}", id)
+            .retrieve()
+            .bodyToMono(ImageDTO.class)
+            .doOnError(e -> System.err.println("Error: " + e.getMessage()))
+            .block();
+
+        if (imageDTO == null) {
+            throw new RuntimeException("Image not found");
+        }
+        System.out.println("Received image: " + imageDTO.getName() + " Size: " + imageDTO.getWidth() + "x" + imageDTO.getHeight());
+        return imageDTO;
+    }
+
     public Flux<ImageDTO> sendImages(Flux<ImageDTO> images) {
         images.map(Base64ImageDataEncoder::encode);
 
@@ -43,7 +58,6 @@ public class ServerClient {
                 .retrieve()
                 .bodyToMono(Long.class)
                 .doOnError(e -> System.err.println("Error: " + e.getMessage()));
-
     }
 }
 

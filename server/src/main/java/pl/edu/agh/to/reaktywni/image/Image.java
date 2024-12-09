@@ -3,7 +3,6 @@ package pl.edu.agh.to.reaktywni.image;
 import jakarta.persistence.*;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 
-import java.nio.file.Path;
 import java.util.Set;
 
 
@@ -37,6 +36,11 @@ public class Image {
         this.width = width;
         this.height = height;
         this.data = data;
+    }
+
+    public static Image createFromImageDTO(ImageDTO imageDTO) {
+        return new Image(imageDTO.getName(), imageDTO.getExtensionType(),
+                imageDTO.getWidth(), imageDTO.getHeight(), imageDTO.getData());
     }
 
     public int getId() {

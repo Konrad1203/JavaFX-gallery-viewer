@@ -1,26 +1,35 @@
 package pl.edu.agh.to.reaktywni.model;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pl.edu.agh.to.reaktywni.GUI.ImageGalleryPresenter;
 import pl.edu.agh.to.reaktywni.ServerClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class ImagePipeline {
+
     private final ServerClient serverClient;
+    private ImageGalleryPresenter presenter;
 
     public ImagePipeline(ServerClient serverClient) {
         this.serverClient = serverClient;
     }
 
+    public void setPresenter(ImageGalleryPresenter presenter) {
+        this.presenter = presenter;
+    }
+
     public void sendImagesFromFiles(List<File> files, int positionCounter) {
-        if(files == null || files.isEmpty()) return;
 
         List<ImageDTO> images = convertFilesToImages(files, positionCounter);
+        presenter.addPlaceholdersToGrid(images.size());
 
         System.out.println("Wysylam obrazy: " + images.size());
         serverClient.sendImages(Flux.fromIterable(images))
@@ -28,6 +37,7 @@ public class ImagePipeline {
                     System.out.println("Otrzymano: " + processed.getName());
                     System.out.println("Width: " + processed.getWidth() + "\tHeight: " + processed.getHeight());
                 })
+                .doOnNext(presenter::placeImageToGrid)
                 .blockLast();
     }
 
@@ -70,5 +80,9 @@ public class ImagePipeline {
         serverClient.sendImages(Flux.fromIterable(images))
                 .doOnNext(processed -> System.out.println("Otrzymano: " + processed.getName()))
                 .blockLast();
+    }
+
+    public ImageDTO getFullImage(int id) {
+        return serverClient.getFullImage(id);
     }
 }

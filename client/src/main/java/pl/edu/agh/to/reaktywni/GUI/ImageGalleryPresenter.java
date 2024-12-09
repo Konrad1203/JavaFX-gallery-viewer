@@ -27,7 +27,6 @@ public class ImageGalleryPresenter {
 
     @FXML
     private GridPane gridPane;
-    private final Map<Integer, Node> gridNodes = new HashMap<>(); // to be added
     private int gridIndex = 0;
 
     private List<File> files;
@@ -42,17 +41,19 @@ public class ImageGalleryPresenter {
     }
 
     // do pobierania obrazów z serwera przy uruchomieniu
-    /*public void initialize() {
+    public void initialize() {
+        imagePipeline.setPresenter(this);
         Long count = imagePipeline.getImagesCount().block();
         if (count == null) throw new RuntimeException("Nie udało się pobrać liczby obrazów");
         addPlaceholdersToGrid(count);
         imagePipeline.getThumbnails()
-                .doOnNext(this::placeImageInGrid)
+                .doOnNext(this::placeImageToGrid)
                 .doOnComplete(() -> System.out.println("Wczytano wszystkie obrazy"))
                 .subscribe();
-    }*/
+    }
 
-    public void openSelectionWindow(ActionEvent actionEvent) {
+    @FXML
+    private void openSelectionWindow(ActionEvent actionEvent) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Wybierz obrazy");
         fileChooser.getExtensionFilters().add(
@@ -66,19 +67,14 @@ public class ImageGalleryPresenter {
         }
     }
 
-    public void sendImages(ActionEvent actionEvent) {
+    @FXML
+    private void sendImages(ActionEvent actionEvent) {
 
-        // Tymczasowe dodawanie zdjęć od razu na front
         if (files == null) return;
-        createRowsIfRequired(files.size());
-        for (File file : files) {
-            placeImageInGrid(ImageDTO.createFromFile(file));
-        }
-
-        //imagePipeline.sendImagesFromFiles(files, 0);
+        imagePipeline.sendImagesFromFiles(files, 0);
     }
 
-    private void addPlaceholdersToGrid(long count) {
+    public void addPlaceholdersToGrid(long count) {
         createRowsIfRequired(count);
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/GUI/loading.gif")), 100, 100, true, true);
         for (int i = gridIndex; i < gridIndex + count; i++) {
@@ -98,7 +94,7 @@ public class ImageGalleryPresenter {
         });
     }
 
-    private void placeImageInGrid(ImageDTO image) {
+    public void placeImageToGrid(ImageDTO image) {
         ImageView imageView = new ImageView(new Image(new ByteArrayInputStream(image.getData()), 200, 120, true, false));
         Label nameLabel = new Label(image.getName());
         nameLabel.setWrapText(true);
@@ -106,7 +102,8 @@ public class ImageGalleryPresenter {
         photoBox.setMaxHeight(160);
         photoBox.setAlignment(Pos.TOP_CENTER);
 
-        photoBox.setOnMouseClicked(event -> stageInitializer.openBigImageView(image));
+        // TO DO - nie znamy id obrazków
+        photoBox.setOnMouseClicked(event -> stageInitializer.openBigImageView(imagePipeline.getFullImage(1)));
 
         Platform.runLater(() -> {
             final int row = gridIndex / gridPane.getColumnCount();

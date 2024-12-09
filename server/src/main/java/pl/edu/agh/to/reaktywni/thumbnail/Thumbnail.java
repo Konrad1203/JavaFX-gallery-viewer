@@ -26,7 +26,11 @@ public class Thumbnail {
         this.data = data;
     }
 
-    public int getId() {
-        return id;
+    public Image getImage() {
+        return image;
+    }
+
+    public byte[] getData() {
+        return data;
     }
 }
