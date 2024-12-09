@@ -4,7 +4,6 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -40,7 +39,6 @@ public class ImageGalleryPresenter {
         this.stageInitializer = stageInitializer;
     }
 
-    // do pobierania obrazów z serwera przy uruchomieniu
     public void initialize() {
         imagePipeline.setPresenter(this);
         Long count = imagePipeline.getImagesCount().block();
@@ -101,9 +99,8 @@ public class ImageGalleryPresenter {
         VBox photoBox = new VBox(imageView, nameLabel);
         photoBox.setMaxHeight(160);
         photoBox.setAlignment(Pos.TOP_CENTER);
-
-        // TO DO - nie znamy id obrazków
-        photoBox.setOnMouseClicked(event -> stageInitializer.openBigImageView(imagePipeline.getFullImage(1)));
+        photoBox.setOnMouseClicked(event ->
+                stageInitializer.openBigImageView(imagePipeline.getFullImage(image.getOriginalImageDBId())));
 
         Platform.runLater(() -> {
             final int row = gridIndex / gridPane.getColumnCount();

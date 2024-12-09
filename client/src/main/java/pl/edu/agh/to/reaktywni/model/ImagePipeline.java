@@ -82,7 +82,7 @@ public class ImagePipeline {
                 .blockLast();
     }
 
-    public ImageDTO getFullImage(int id) {
+    public Mono<ImageDTO> getFullImage(int id) {
         return serverClient.getFullImage(id);
     }
 }

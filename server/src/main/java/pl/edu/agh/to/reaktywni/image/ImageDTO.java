@@ -11,7 +11,7 @@ import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 @Getter
 public class ImageDTO {
 
-    private int gridPlacementId;
+    private int originalImageDBId;
     @Setter
     private String name;
     private final String extensionType;
@@ -32,6 +32,7 @@ public class ImageDTO {
     public static ImageDTO createFromThumbnail(Thumbnail thumbnail, int width, int height) {
         Image image = thumbnail.getImage();
         return ImageDTO.builder()
+                .originalImageDBId(image.getId())
                 .name(image.getName())
                 .extensionType(image.getExtensionType())
                 .width(width)

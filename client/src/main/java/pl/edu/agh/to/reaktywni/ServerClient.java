@@ -17,19 +17,15 @@ public class ServerClient {
         this.webClient = webClientBuilder.baseUrl("http://localhost:8080").build();
     }
 
-    public ImageDTO getFullImage(int id) {
-        ImageDTO imageDTO = webClient.get()
+    public Mono<ImageDTO> getFullImage(int id) {
+        // Symulowanie opóźnienia sieciowego
+        return webClient.get()
             .uri("/images/{id}", id)
             .retrieve()
             .bodyToMono(ImageDTO.class)
             .doOnError(e -> System.err.println("Error: " + e.getMessage()))
-            .block();
-
-        if (imageDTO == null) {
-            throw new RuntimeException("Image not found");
-        }
-        System.out.println("Received image: " + imageDTO.getName() + " Size: " + imageDTO.getWidth() + "x" + imageDTO.getHeight());
-        return imageDTO;
+            // Symulowanie opóźnienia sieciowego
+            .delayElement(java.time.Duration.ofMillis(1000));
     }
 
     public Flux<ImageDTO> sendImages(Flux<ImageDTO> images) {
@@ -49,7 +45,9 @@ public class ServerClient {
                 .uri("/images")
                 .retrieve()
                 .bodyToFlux(ImageDTO.class)
-                .doOnError(e -> System.err.println("Error: " + e.getMessage()));
+                .doOnError(e -> System.err.println("Error: " + e.getMessage()))
+                // Symulowanie opóźnienia sieciowego
+                .delayElements(java.time.Duration.ofMillis(500));
     }
 
     public Mono<Long> getImagesCount() {

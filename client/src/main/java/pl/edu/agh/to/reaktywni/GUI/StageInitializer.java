@@ -1,5 +1,6 @@
 package pl.edu.agh.to.reaktywni.GUI;
 
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -43,7 +44,7 @@ public class StageInitializer implements ApplicationListener<ImageGalleryApp.Sta
         }
     }
 
-    public void openBigImageView(ImageDTO image) {
+    public void openBigImageView(Mono<ImageDTO> imageMono) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/big_image_view.fxml"));
             loader.setControllerFactory(applicationContext::getBean);
@@ -57,11 +58,12 @@ public class StageInitializer implements ApplicationListener<ImageGalleryApp.Sta
             stage.setResizable(false);
             stage.show();
 
-            if (image == null) throw new RuntimeException("Failed loading image");
-            presenter.setName(image.getName());
-            presenter.setSize(image.getWidth(), image.getHeight());
-            presenter.setImage(image.getData());
-
+            imageMono.subscribe(image -> Platform.runLater(() -> {
+                if (image == null) throw new RuntimeException("Failed loading image");
+                presenter.setName(image.getName());
+                presenter.setSize(image.getWidth(), image.getHeight());
+                presenter.setImage(image.getData());
+            }));
 
         } catch (IOException e) {
             throw new RuntimeException("Failed loading FXML file: ", e);

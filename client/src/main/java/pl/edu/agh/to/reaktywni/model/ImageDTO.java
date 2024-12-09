@@ -11,7 +11,7 @@ import java.util.Iterator;
 
 public class ImageDTO {
 
-    private int gridPlacementId = 0;
+    private int originalImageDBId;
     private String name;
     private final String extensionType;
     private final int width;
@@ -58,12 +58,8 @@ public class ImageDTO {
         }
     }
 
-    public int getGridPlacementId() {
-        return gridPlacementId;
-    }
-
-    public void setGridPlacementId(int id) {
-        this.gridPlacementId = id;
+    public int getOriginalImageDBId() {
+        return originalImageDBId;
     }
 
     public String getName() {
