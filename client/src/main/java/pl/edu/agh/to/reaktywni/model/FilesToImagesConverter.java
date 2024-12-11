@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface FilesToImagesConverter {
+
     static List<Image> convertWithPositionsCounting(List<File> files, int positionCounter) {
         List<Image> images = new ArrayList<>();
         for (File file : files) {

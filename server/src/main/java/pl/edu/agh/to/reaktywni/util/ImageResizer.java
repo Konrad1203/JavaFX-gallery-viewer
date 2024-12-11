@@ -9,7 +9,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Optional;
 import pl.edu.agh.to.reaktywni.image.ImageState;
 
 @Component

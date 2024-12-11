@@ -22,9 +22,7 @@ public class ServerClient {
             .uri("/images/{id}", id)
             .retrieve()
             .bodyToMono(Image.class)
-            .doOnError(e -> System.err.println("Error: " + e.getMessage()))
-            // Symulowanie opóźnienia sieciowego
-            .delayElement(java.time.Duration.ofMillis(1000));
+            .doOnError(e -> System.err.println("Error: " + e.getMessage()));
     }
 
     public Flux<Image> sendImages(Flux<Image> images) {
@@ -45,9 +43,7 @@ public class ServerClient {
                 .uri("/images")
                 .retrieve()
                 .bodyToFlux(Image.class)
-                .doOnError(e -> System.err.println("Error: " + e.getMessage()))
-                // Symulowanie opóźnienia sieciowego
-                .delayElements(java.time.Duration.ofMillis(500));
+                .doOnError(e -> System.err.println("Error: " + e.getMessage()));
     }
 
     public Mono<Long> getImagesCount() {

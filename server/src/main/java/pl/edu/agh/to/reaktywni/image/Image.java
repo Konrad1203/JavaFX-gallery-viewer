@@ -9,6 +9,7 @@ import lombok.Setter;
 @Entity
 public class Image {
 
+    @Setter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int databaseId;

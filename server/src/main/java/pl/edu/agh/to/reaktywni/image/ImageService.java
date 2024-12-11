@@ -79,8 +79,10 @@ public class ImageService {
         Optional<ImageMetaData> optionalImage = imageRepository.findByDatabaseId(thumbnail.getImageId());
         if (optionalImage.isPresent()) {
             ImageMetaData imageMetaData = optionalImage.get();
-            return new Image(imageMetaData.getName(), imageMetaData.getExtensionType(),
+            Image image = new Image(imageMetaData.getName(), imageMetaData.getExtensionType(),
                     thumbnail.getWidth(), thumbnail.getHeight(), thumbnail.getData());
+            image.setDatabaseId(thumbnail.getImageId());
+            return image;
         } else {
             throw new RuntimeException("Image not found");
         }
