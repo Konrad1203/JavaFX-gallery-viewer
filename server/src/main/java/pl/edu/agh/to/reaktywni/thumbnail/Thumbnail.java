@@ -1,8 +1,11 @@
 package pl.edu.agh.to.reaktywni.thumbnail;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import pl.edu.agh.to.reaktywni.image.Image;
 
+
+@Getter
 @Entity
 public class Thumbnail {
 
@@ -10,27 +13,24 @@ public class Thumbnail {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @ManyToOne
-    @JoinColumn(name = "image_id", nullable = false)
-    private Image image;
+    private int imageId;
+
+    private int width;
+
+    private int height;
 
     @Lob
     private byte[] data;
 
     private int state;
 
+
     public Thumbnail() {}
 
-    public Thumbnail(Image image, byte[] data) {
-        this.image = image;
+    public Thumbnail(int imageId, int width, int height, byte[] data) {
+        this.imageId = imageId;
+        this.width = width;
+        this.height = height;
         this.data = data;
-    }
-
-    public Image getImage() {
-        return image;
-    }
-
-    public byte[] getData() {
-        return data;
     }
 }

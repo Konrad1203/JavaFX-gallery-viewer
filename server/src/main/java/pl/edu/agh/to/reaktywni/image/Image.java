@@ -1,31 +1,34 @@
 package pl.edu.agh.to.reaktywni.image;
 
 import jakarta.persistence.*;
-import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.Set;
 
-
+@Getter
 @Entity
 public class Image {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private int databaseId;
+
+    @Transient
+    private int gridPlacementID;
 
     private String name;
 
     private String extensionType;
 
+    @Setter
     private int width;
 
+    @Setter
     private int height;
 
+    @Setter
     @Lob
     private byte[] data;
-
-    @OneToMany(mappedBy = "image", fetch = FetchType.LAZY)
-    private Set<Thumbnail> thumbnails;
 
 
     public Image() {}
@@ -36,34 +39,5 @@ public class Image {
         this.width = width;
         this.height = height;
         this.data = data;
-    }
-
-    public static Image createFromImageDTO(ImageDTO imageDTO) {
-        return new Image(imageDTO.getName(), imageDTO.getExtensionType(),
-                imageDTO.getWidth(), imageDTO.getHeight(), imageDTO.getData());
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getExtensionType() {
-        return extensionType;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public byte[] getImageData() {
-        return data;
     }
 }

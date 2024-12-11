@@ -9,17 +9,27 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Iterator;
 
-public class ImageDTO {
 
-    private int originalImageDBId;
+public class Image {
+
+
+    private int databaseId;
+
+    private final int gridPlacementId;
+
     private String name;
+
     private final String extensionType;
+
     private final int width;
+
     private final int height;
+
     private byte[] data;
 
 
-    private ImageDTO(String name, String extensionType, int width, int height, byte[] data) {
+    private Image(int gridPlacementId, String name, String extensionType, int width, int height, byte[] data) {
+        this.gridPlacementId = gridPlacementId;
         this.name = name;
         this.extensionType = extensionType;
         this.width = width;
@@ -27,11 +37,11 @@ public class ImageDTO {
         this.data = data;
     }
 
-    public static ImageDTO createFromFile(File file) {
+    public static Image createFromFile(int id, File file) {
         try {
             String extensionType = getFileExtension(file.getName());
             int[] size = getImageDimensions(file, extensionType);
-            return new ImageDTO(file.getName(), extensionType, size[0], size[1], Files.readAllBytes(file.toPath()));
+            return new Image(id, file.getName(), extensionType, size[0], size[1], Files.readAllBytes(file.toPath()));
         } catch (IOException e) {
             throw new RuntimeException("Error reading image file: " + file.getAbsolutePath(), e);
         }
@@ -58,8 +68,12 @@ public class ImageDTO {
         }
     }
 
-    public int getOriginalImageDBId() {
-        return originalImageDBId;
+    public int getDatabaseId() {
+        return databaseId;
+    }
+
+    public int getGridPlacementId() {
+        return gridPlacementId;
     }
 
     public String getName() {

@@ -3,7 +3,7 @@ package pl.edu.agh.to.reaktywni;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import pl.edu.agh.to.reaktywni.model.ImageDTO;
+import pl.edu.agh.to.reaktywni.model.Image;
 import pl.edu.agh.to.reaktywni.util.Base64ImageDataEncoder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -17,34 +17,33 @@ public class ServerClient {
         this.webClient = webClientBuilder.baseUrl("http://localhost:8080").build();
     }
 
-    public Mono<ImageDTO> getFullImage(int id) {
-        // Symulowanie opóźnienia sieciowego
+    public Mono<Image> getFullImage(int id) {
         return webClient.get()
             .uri("/images/{id}", id)
             .retrieve()
-            .bodyToMono(ImageDTO.class)
+            .bodyToMono(Image.class)
             .doOnError(e -> System.err.println("Error: " + e.getMessage()))
             // Symulowanie opóźnienia sieciowego
             .delayElement(java.time.Duration.ofMillis(1000));
     }
 
-    public Flux<ImageDTO> sendImages(Flux<ImageDTO> images) {
+    public Flux<Image> sendImages(Flux<Image> images) {
         images.map(Base64ImageDataEncoder::encode);
 
         return webClient.post()
                 .uri("/images")
                 .contentType(MediaType.APPLICATION_NDJSON)
-                .body(images, ImageDTO.class)
+                .body(images, Image.class)
                 .retrieve()
-                .bodyToFlux(ImageDTO.class)
+                .bodyToFlux(Image.class)
                 .doOnError(e -> System.err.println("Error: " + e.getMessage()));
     }
 
-    public Flux<ImageDTO> getThumbnails() {
+    public Flux<Image> getThumbnails() {
         return webClient.get()
                 .uri("/images")
                 .retrieve()
-                .bodyToFlux(ImageDTO.class)
+                .bodyToFlux(Image.class)
                 .doOnError(e -> System.err.println("Error: " + e.getMessage()))
                 // Symulowanie opóźnienia sieciowego
                 .delayElements(java.time.Duration.ofMillis(500));

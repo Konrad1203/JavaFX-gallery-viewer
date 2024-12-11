@@ -5,6 +5,7 @@ import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
 import pl.edu.agh.to.reaktywni.util.Resizer;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.Optional;
@@ -26,28 +27,28 @@ public class ImageService {
         this.imageResizer = imageResizer;
     }
 
-    public Optional<ImageDTO> getImage(int id) {
-        return imageRepository.findById(id).map(ImageDTO::createFromImage);
+    public Optional<Image> getImage(int id) {
+        return imageRepository.findById(id);
     }
 
-    public Flux<ImageDTO> getThumbnails() {
-        return Flux.fromIterable(thumbnailRepository.findAll()).map(imageDTO -> ImageDTO.createFromThumbnail(imageDTO, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT));
+    public Flux<Image> getThumbnails() {
+        return Flux.fromIterable(thumbnailRepository.findAll())
+                .map(this::createImageFromThumbnail);
     }
 
     public long getImagesCount() {
         return imageRepository.count();
     }
 
-    public Flux<ImageDTO> processImages(Flux<ImageDTO> images) {
+    public Flux<Image> processImages(Flux<Image> images) {
 
-        return images.map(Image::createFromImageDTO)
+        return images
                 .doOnNext(this::printImageData)
-                .publishOn(Schedulers.boundedElastic())
                 .doOnNext(this::saveImage)
-                .map(image -> imageResizer.resize(image, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT))
-                .publishOn(Schedulers.boundedElastic())
-                .doOnNext(this::saveThumbnail)
-                .map(thumbnail -> ImageDTO.createFromThumbnail(thumbnail, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT));
+                .flatMap(image -> Mono.fromCallable(() -> imageResizer.resize(image, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT))
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .doOnNext(this::createAndSaveThumbnail)
+                );
     }
 
     private void printImageData(Image image) {
@@ -58,7 +59,19 @@ public class ImageService {
         imageRepository.save(image);
     }
 
-    public void saveThumbnail(Thumbnail thumbnail) {
+    public void createAndSaveThumbnail(Image image) {
+        Thumbnail thumbnail = new Thumbnail(image.getDatabaseId(), THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, image.getData());
         thumbnailRepository.save(thumbnail);
+    }
+
+    public Image createImageFromThumbnail(Thumbnail thumbnail) {
+        Optional<ImageMetaData> optionalImage = imageRepository.findByDatabaseId(thumbnail.getImageId());
+        if (optionalImage.isPresent()) {
+            ImageMetaData imageMetaData = optionalImage.get();
+            return new Image(imageMetaData.getName(), imageMetaData.getExtensionType(),
+                    thumbnail.getWidth(), thumbnail.getHeight(), thumbnail.getData());
+        } else {
+            throw new RuntimeException("Image not found");
+        }
     }
 }

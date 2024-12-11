@@ -9,7 +9,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import pl.edu.agh.to.reaktywni.ImageGalleryApp;
-import pl.edu.agh.to.reaktywni.model.ImageDTO;
+import pl.edu.agh.to.reaktywni.model.Image;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -31,7 +31,6 @@ public class StageInitializer implements ApplicationListener<ImageGalleryApp.Sta
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/image_gallery_view.fxml"));
         loader.setControllerFactory(applicationContext::getBean);
-
         try {
             Parent root = loader.load();
             Scene scene = new Scene(root, 900, 600);
@@ -44,7 +43,7 @@ public class StageInitializer implements ApplicationListener<ImageGalleryApp.Sta
         }
     }
 
-    public void openBigImageView(Mono<ImageDTO> imageMono) {
+    public void openBigImageView(Mono<Image> imageMono) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/big_image_view.fxml"));
             loader.setControllerFactory(applicationContext::getBean);

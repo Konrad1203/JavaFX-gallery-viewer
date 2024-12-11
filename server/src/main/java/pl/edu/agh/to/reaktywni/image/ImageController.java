@@ -1,9 +1,7 @@
 package pl.edu.agh.to.reaktywni.image;
 
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -21,8 +19,8 @@ public class ImageController {
     }
 
     @GetMapping("/{id}")
-    public Mono<ImageDTO> getImage(@PathVariable int id) {
-        Optional<ImageDTO> image = imageService.getImage(id);
+    public Mono<Image> getImage(@PathVariable int id) {
+        Optional<Image> image = imageService.getImage(id);
         if (image.isPresent()) {
             System.out.println("Zdjęcie znalezione: " + image.get().getName());
             return Mono.just(image.get());
@@ -33,7 +31,7 @@ public class ImageController {
     }
 
     @GetMapping
-    public Flux<ImageDTO> getThumbnails() {
+    public Flux<Image> getThumbnails() {
         return imageService.getThumbnails();
     }
 
@@ -43,7 +41,7 @@ public class ImageController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_NDJSON_VALUE, produces = MediaType.APPLICATION_NDJSON_VALUE)
-    public Flux<ImageDTO> postImages(@RequestBody Flux<ImageDTO> images) {
+    public Flux<Image> postImages(@RequestBody Flux<Image> images) {
         return imageService.processImages(images);
     }
 }

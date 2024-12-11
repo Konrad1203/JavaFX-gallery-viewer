@@ -5,13 +5,12 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.springframework.stereotype.Component;
-import pl.edu.agh.to.reaktywni.model.ImageDTO;
+import pl.edu.agh.to.reaktywni.model.Image;
 import pl.edu.agh.to.reaktywni.model.ImagePipeline;
 
 import java.io.ByteArrayInputStream;
@@ -67,14 +66,13 @@ public class ImageGalleryPresenter {
 
     @FXML
     private void sendImages(ActionEvent actionEvent) {
-
         if (files == null) return;
-        imagePipeline.sendImagesFromFiles(files, 0);
+        new Thread(() -> imagePipeline.sendImagesFromFiles(files, 0)).start();
     }
 
     public void addPlaceholdersToGrid(long count) {
         createRowsIfRequired(count);
-        Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/GUI/loading.gif")), 100, 100, true, true);
+        javafx.scene.image.Image image = new javafx.scene.image.Image(Objects.requireNonNull(getClass().getResourceAsStream("/GUI/loading.gif")), 100, 100, true, true);
         for (int i = gridIndex; i < gridIndex + count; i++) {
             ImageView imageView = new ImageView(image);
             final int index = i;
@@ -92,15 +90,15 @@ public class ImageGalleryPresenter {
         });
     }
 
-    public void placeImageToGrid(ImageDTO image) {
-        ImageView imageView = new ImageView(new Image(new ByteArrayInputStream(image.getData()), 200, 120, true, false));
+    public void placeImageToGrid(Image image) {
+        ImageView imageView = new ImageView(new javafx.scene.image.Image(new ByteArrayInputStream(image.getData()), 200, 120, false, false));
         Label nameLabel = new Label(image.getName());
         nameLabel.setWrapText(true);
         VBox photoBox = new VBox(imageView, nameLabel);
         photoBox.setMaxHeight(160);
         photoBox.setAlignment(Pos.TOP_CENTER);
         photoBox.setOnMouseClicked(event ->
-                stageInitializer.openBigImageView(imagePipeline.getFullImage(image.getOriginalImageDBId())));
+                stageInitializer.openBigImageView(imagePipeline.getFullImage(image.getDatabaseId())));
 
         Platform.runLater(() -> {
             final int row = gridIndex / gridPane.getColumnCount();
