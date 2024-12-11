@@ -25,9 +25,12 @@ public class ImageGalleryPresenter {
 
     @FXML
     private GridPane gridPane;
+
     private int gridIndex = 0;
 
     private List<File> files;
+
+    private final Map<Integer, Integer> imageIdToGridIndex = new HashMap<>();
 
     private final ImagePipeline imagePipeline;
     private final StageInitializer stageInitializer;
@@ -40,13 +43,14 @@ public class ImageGalleryPresenter {
 
     public void initialize() {
         imagePipeline.setPresenter(this);
+        /*
         Long count = imagePipeline.getImagesCount().block();
         if (count == null) throw new RuntimeException("Nie udało się pobrać liczby obrazów");
         addPlaceholdersToGrid(count);
         imagePipeline.getThumbnails()
                 .doOnNext(this::placeImageToGrid)
                 .doOnComplete(() -> System.out.println("Wczytano wszystkie obrazy"))
-                .subscribe();
+                .subscribe();*/
     }
 
     @FXML
@@ -67,22 +71,39 @@ public class ImageGalleryPresenter {
     @FXML
     private void sendImages(ActionEvent actionEvent) {
         if (files == null) return;
-        new Thread(() -> imagePipeline.sendImagesFromFiles(files, 0)).start();
+        final int startGridPosition = gridIndex;
+        gridIndex += files.size();
+        new Thread(() -> imagePipeline.sendImagesFromFiles(files, startGridPosition)).start();
     }
 
     public void addPlaceholdersToGrid(long count) {
-        createRowsIfRequired(count);
+        createRowsIfRequired(count, 0);
         javafx.scene.image.Image image = new javafx.scene.image.Image(Objects.requireNonNull(getClass().getResourceAsStream("/GUI/loading.gif")), 100, 100, true, true);
-        for (int i = gridIndex; i < gridIndex + count; i++) {
+        for (int i = 0; i < count; i++) {
             ImageView imageView = new ImageView(image);
             final int index = i;
             Platform.runLater(() -> gridPane.add(imageView, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
         }
     }
 
-    private void createRowsIfRequired(long count) {
+    public void addPlaceholdersToGrid(List<Image> images, int startGridPosition) {
+        createRowsIfRequired(images.size(), startGridPosition);
+
+        javafx.scene.image.Image placeholder = new javafx.scene.image.Image(Objects.requireNonNull(getClass().getResourceAsStream("/GUI/loading.gif")), 100, 100, true, true);
+        for (Image image : images) {
+            ImageView imageView = new ImageView(placeholder);
+            Label nameLabel = new Label(image.getName());
+            nameLabel.setWrapText(true);
+            VBox placeholderBox = new VBox(imageView, nameLabel);
+            final int index = startGridPosition++;
+            imageIdToGridIndex.put(image.getGridPlacementId(), index);
+            Platform.runLater(() -> gridPane.add(placeholderBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
+        }
+    }
+
+    private void createRowsIfRequired(long count, int startGridPosition) {
         Platform.runLater(() -> {
-            int requiredRows = (int) ((gridIndex + count) / gridPane.getColumnCount()) + 1;
+            int requiredRows = (int) ((startGridPosition + count) / gridPane.getColumnCount()) + 1;
             for (int i = gridPane.getRowCount(); i < requiredRows; i++) {
                 gridPane.addRow(i);
                 gridPane.getRowConstraints().add(gridPane.getRowConstraints().getFirst());
@@ -90,7 +111,7 @@ public class ImageGalleryPresenter {
         });
     }
 
-    public void placeImageToGrid(Image image) {
+    private VBox getVBox(Image image) {
         ImageView imageView = new ImageView(new javafx.scene.image.Image(new ByteArrayInputStream(image.getData()), 200, 120, false, false));
         Label nameLabel = new Label(image.getName());
         nameLabel.setWrapText(true);
@@ -99,13 +120,29 @@ public class ImageGalleryPresenter {
         photoBox.setAlignment(Pos.TOP_CENTER);
         photoBox.setOnMouseClicked(event ->
                 stageInitializer.openBigImageView(imagePipeline.getFullImage(image.getDatabaseId())));
+        return photoBox;
+    }
+
+    public void replacePlaceholderWithImage(Image image) {
+        VBox photoBox = getVBox(image);
 
         Platform.runLater(() -> {
-            final int row = gridIndex / gridPane.getColumnCount();
-            final int col = gridIndex % gridPane.getColumnCount();
+            final int index = imageIdToGridIndex.remove(image.getGridPlacementId());
+            final int row = index / gridPane.getColumnCount();
+            final int col = index % gridPane.getColumnCount();
             gridPane.getChildren().removeIf(node -> GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == col);
             gridPane.add(photoBox, col, row);
-            gridIndex++;
+        });
+    }
+
+    public void placeImageToGrid(Image image) {
+        VBox photoBox = getVBox(image);
+        Platform.runLater(() -> {
+            final int index = gridIndex++;
+            final int row = index / gridPane.getColumnCount();
+            final int col = index % gridPane.getColumnCount();
+            gridPane.getChildren().removeIf(node -> GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == col);
+            gridPane.add(photoBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount());
         });
     }
 }

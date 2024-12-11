@@ -25,18 +25,15 @@ public class ImagePipeline {
         this.presenter = presenter;
     }
 
-    public void sendImagesFromFiles(List<File> files, int positionCounter) {
+    public void sendImagesFromFiles(List<File> files, int startGridPosition) {
 
-        List<Image> images = convertFilesToImages(files, positionCounter);
-        presenter.addPlaceholdersToGrid(images.size());
+        List<Image> images = convertFilesToImages(files, startGridPosition);
+        presenter.addPlaceholdersToGrid(images, startGridPosition);
 
         System.out.println("Wysylam obrazy: " + images.size());
         serverClient.sendImages(Flux.fromIterable(images))
-                .doOnNext(processed -> {
-                    System.out.println("Otrzymano: " + processed.getName());
-                    System.out.println("Width: " + processed.getWidth() + "\tHeight: " + processed.getHeight());
-                })
-                .doOnNext(presenter::placeImageToGrid)
+                .doOnNext(image -> System.out.println("Send: " + image.getName() + " | GridID: " + image.getGridPlacementId() + " | DB_ID: " + image.getDatabaseId()))
+                .doOnNext(presenter::replacePlaceholderWithImage)
                 .blockLast();
     }
 

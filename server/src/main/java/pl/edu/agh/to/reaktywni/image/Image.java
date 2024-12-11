@@ -14,7 +14,7 @@ public class Image {
     private int databaseId;
 
     @Transient
-    private int gridPlacementID;
+    private int gridPlacementId;
 
     private String name;
 
