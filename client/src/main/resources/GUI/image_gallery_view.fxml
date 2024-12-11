@@ -24,7 +24,7 @@
                     <Insets />
                 </VBox.margin>
                 <Button mnemonicParsing="false" onAction="#openSelectionWindow" text="Wybierz obrazy " />
-                <Button onAction="#sendImages" mnemonicParsing="false" text="Wyślij" />
+                <Button onAction="#sendAndReceiveImages" mnemonicParsing="false" text="Wyślij" />
             </HBox>
             <Label fx:id="filesSelectedLabel" text="Wybrano x elementów" visible="false" />
             <BorderPane.margin>

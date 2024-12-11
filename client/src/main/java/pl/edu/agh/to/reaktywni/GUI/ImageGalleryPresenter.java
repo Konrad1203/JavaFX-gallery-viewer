@@ -10,6 +10,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.springframework.stereotype.Component;
+import pl.edu.agh.to.reaktywni.model.FilesToImagesConverter;
 import pl.edu.agh.to.reaktywni.model.Image;
 import pl.edu.agh.to.reaktywni.model.ImagePipeline;
 
@@ -69,11 +70,14 @@ public class ImageGalleryPresenter {
     }
 
     @FXML
-    private void sendImages(ActionEvent actionEvent) {
+    private void sendAndReceiveImages(ActionEvent actionEvent) {
         if (files == null) return;
         final int startGridPosition = gridIndex;
+        List<Image> imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, startGridPosition);
         gridIndex += files.size();
-        new Thread(() -> imagePipeline.sendImagesFromFiles(files, startGridPosition)).start();
+        addPlaceholdersToGrid(imagesToSend, startGridPosition);
+
+        new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend)).start();
     }
 
     public void addPlaceholdersToGrid(long count) {
