@@ -16,6 +16,10 @@ public class Image {
     @Transient
     private int gridPlacementId;
 
+    @Transient
+    @Setter
+    private ImageState imageState;
+
     private String name;
 
     private String extensionType;

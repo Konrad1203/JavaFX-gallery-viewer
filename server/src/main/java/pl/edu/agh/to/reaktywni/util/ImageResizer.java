@@ -9,7 +9,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
+import java.util.Optional;
+import pl.edu.agh.to.reaktywni.image.ImageState;
 
 @Component
 public class ImageResizer implements Resizer {
@@ -28,11 +29,24 @@ public class ImageResizer implements Resizer {
 
             ImageIO.write(thumbnail, image.getExtensionType(), outputStream);
         } catch (IOException e) {
-            return null;
+            setFailureImage(image);
+            return image;
         }
+        setSuccessImage(image, outputStream, targetWidth, targetHeight);
+        return image;
+    }
+
+    private void setFailureImage(Image image) {
+        image.setImageState(ImageState.FAILURE);
+        image.setData(new byte[0]);
+        image.setWidth(0);
+        image.setHeight(0);
+    }
+
+    private void setSuccessImage(Image image, ByteArrayOutputStream outputStream, int targetWidth, int targetHeight) {
+        image.setImageState(ImageState.SUCCESS);
         image.setData(outputStream.toByteArray());
         image.setWidth(targetWidth);
         image.setHeight(targetHeight);
-        return image;
     }
 }
