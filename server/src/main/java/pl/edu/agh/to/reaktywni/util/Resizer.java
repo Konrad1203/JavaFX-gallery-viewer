@@ -8,5 +8,5 @@ import java.util.Optional;
 @FunctionalInterface
 public interface Resizer {
 
-    Optional<Image> resize(Image image, int targetWidth, int targetHeight);
+    Image resize(Image image, int targetWidth, int targetHeight);
 }

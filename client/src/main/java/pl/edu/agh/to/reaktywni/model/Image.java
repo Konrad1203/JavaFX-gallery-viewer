@@ -17,6 +17,8 @@ public class Image {
 
     private final int gridPlacementId;
 
+    private ImageState imageState;
+
     private String name;
 
     private final String extensionType;
@@ -102,6 +104,10 @@ public class Image {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public ImageState getImageState() {
+        return imageState;
     }
 }
 

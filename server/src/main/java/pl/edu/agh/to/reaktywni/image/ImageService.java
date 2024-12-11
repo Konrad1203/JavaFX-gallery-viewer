@@ -47,7 +47,6 @@ public class ImageService {
                 .doOnNext(this::saveImage)
                 .flatMap(image -> Mono.fromCallable(() -> imageResizer.resize(image, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT))
                         .subscribeOn(Schedulers.boundedElastic())
-                        .flatMap(optionalImage -> Mono.justOrEmpty(optionalImage))
                         .doOnNext(this::printProcessedImageData)
                         .doOnNext(this::createAndSaveThumbnail)
                 );
@@ -58,7 +57,11 @@ public class ImageService {
     }
 
     private void printProcessedImageData(Image image) {
-        System.out.println("Processed image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
+        if(image.getImageState().equals(ImageState.FAILURE)) {
+            System.out.println("Failed to process image: " + image.getName());
+        }else {
+            System.out.println("Processed image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
+        }
     }
 
     public void saveImage(Image image) {
@@ -66,8 +69,10 @@ public class ImageService {
     }
 
     public void createAndSaveThumbnail(Image image) {
-        Thumbnail thumbnail = new Thumbnail(image.getDatabaseId(), THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, image.getData());
-        thumbnailRepository.save(thumbnail);
+        if(image.getImageState().equals(ImageState.SUCCESS)) {
+            Thumbnail thumbnail = new Thumbnail(image.getDatabaseId(), THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, image.getData());
+            thumbnailRepository.save(thumbnail);
+        }
     }
 
     public Image createImageFromThumbnail(Thumbnail thumbnail) {
