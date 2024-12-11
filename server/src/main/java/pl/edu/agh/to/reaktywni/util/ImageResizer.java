@@ -9,13 +9,14 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Optional;
 
 
 @Component
 public class ImageResizer implements Resizer {
 
     @Override
-    public Image resize(Image image, int targetWidth, int targetHeight) {
+    public Optional<Image> resize(Image image, int targetWidth, int targetHeight) {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(image.getData());
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -28,11 +29,11 @@ public class ImageResizer implements Resizer {
 
             ImageIO.write(thumbnail, image.getExtensionType(), outputStream);
         } catch (IOException e) {
-            return null;
+            return Optional.empty();
         }
         image.setData(outputStream.toByteArray());
         image.setWidth(targetWidth);
         image.setHeight(targetHeight);
-        return image;
+        return Optional.of(image);
     }
 }

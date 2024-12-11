@@ -47,12 +47,18 @@ public class ImageService {
                 .doOnNext(this::saveImage)
                 .flatMap(image -> Mono.fromCallable(() -> imageResizer.resize(image, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT))
                         .subscribeOn(Schedulers.boundedElastic())
+                        .flatMap(optionalImage -> Mono.justOrEmpty(optionalImage))
+                        .doOnNext(this::printProcessedImageData)
                         .doOnNext(this::createAndSaveThumbnail)
                 );
     }
 
     private void printImageData(Image image) {
         System.out.println("Received image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
+    }
+
+    private void printProcessedImageData(Image image) {
+        System.out.println("Processed image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
     }
 
     public void saveImage(Image image) {
