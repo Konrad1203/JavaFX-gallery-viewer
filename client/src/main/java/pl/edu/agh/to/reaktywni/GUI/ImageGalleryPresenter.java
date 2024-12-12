@@ -48,7 +48,6 @@ public class ImageGalleryPresenter {
 
     private final StageInitializer stageInitializer;
 
-
     public ImageGalleryPresenter(ImagePipeline imagePipeline, StageInitializer stageInitializer) {
         this.imagePipeline = imagePipeline;
         this.stageInitializer = stageInitializer;

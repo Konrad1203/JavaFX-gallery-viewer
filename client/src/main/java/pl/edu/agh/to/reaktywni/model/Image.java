@@ -1,5 +1,6 @@
 package pl.edu.agh.to.reaktywni.model;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +14,7 @@ import java.nio.file.Files;
 import java.util.Iterator;
 
 @Getter
+@Builder
 public class Image {
     private int databaseId;
     private final int gridPlacementId;
@@ -24,21 +26,20 @@ public class Image {
     @Setter
     private byte[] data;
 
-
-    private Image(int gridPlacementId, String name, String extensionType, int width, int height, byte[] data) {
-        this.gridPlacementId = gridPlacementId;
-        this.name = name;
-        this.extensionType = extensionType;
-        this.width = width;
-        this.height = height;
-        this.data = data;
-    }
-
-    public static Image createFromFile(int id, File file) {
+    public static Image createFromFile(int gridPlacementId, File file) {
         try {
             String extensionType = getFileExtension(file.getName());
             int[] size = getImageDimensions(file, extensionType);
-            return new Image(id, file.getName(), extensionType, size[0], size[1], Files.readAllBytes(file.toPath()));
+
+            return new ImageBuilder()
+                    .gridPlacementId(gridPlacementId)
+                    .name(file.getName())
+                    .extensionType(extensionType)
+                    .width(size[0])
+                    .height(size[1])
+                    .data(Files.readAllBytes(file.toPath()))
+                    .build();
+
         } catch (IOException e) {
             throw new RuntimeException("Error reading image file: " + file.getAbsolutePath(), e);
         }

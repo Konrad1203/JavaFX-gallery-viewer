@@ -1,12 +1,14 @@
 package pl.edu.agh.to.reaktywni.image;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 
 @Getter
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Image {
 
     @Setter
@@ -35,14 +37,4 @@ public class Image {
     @Lob
     private byte[] data;
 
-
-    public Image() {}
-
-    public Image(String name, String extensionType, int width, int height, byte[] data) {
-        this.name = name;
-        this.extensionType = extensionType;
-        this.width = width;
-        this.height = height;
-        this.data = data;
-    }
 }

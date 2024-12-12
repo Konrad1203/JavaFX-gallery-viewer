@@ -20,7 +20,6 @@ public class StageInitializer implements ApplicationListener<ImageGalleryApp.Sta
 
     private final ApplicationContext applicationContext;
 
-
     public StageInitializer(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }

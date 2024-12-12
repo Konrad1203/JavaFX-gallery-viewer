@@ -6,11 +6,11 @@ import java.util.List;
 
 public interface FilesToImagesConverter {
 
-    static List<Image> convertWithPositionsCounting(List<File> files, int positionCounter) {
+    static List<Image> convertWithPositionsCounting(List<File> files, int gridPlacementCounter) {
         List<Image> images = new ArrayList<>();
         for (File file : files) {
-            images.add(Image.createFromFile(positionCounter, file));
-            positionCounter++;
+            images.add(Image.createFromFile(gridPlacementCounter, file));
+            gridPlacementCounter++;
         }
         return images;
     }
