@@ -4,7 +4,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import pl.edu.agh.to.reaktywni.model.Image;
-import pl.edu.agh.to.reaktywni.util.Base64ImageDataEncoder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -27,8 +26,6 @@ public class ServerClient {
     }
 
     public Flux<Image> sendImages(Flux<Image> images) {
-        images.doOnNext(Base64ImageDataEncoder::encode);
-
         return webClient.post()
                 .uri("/images")
                 .contentType(MediaType.APPLICATION_NDJSON)
