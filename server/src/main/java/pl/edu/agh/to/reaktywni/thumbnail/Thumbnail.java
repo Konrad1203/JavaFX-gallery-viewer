@@ -2,8 +2,6 @@ package pl.edu.agh.to.reaktywni.thumbnail;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import pl.edu.agh.to.reaktywni.image.Image;
-
 
 @Getter
 @Entity

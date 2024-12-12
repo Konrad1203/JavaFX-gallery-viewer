@@ -1,5 +1,8 @@
 package pl.edu.agh.to.reaktywni.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
@@ -9,24 +12,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Iterator;
 
-
+@Getter
 public class Image {
-
-
     private int databaseId;
-
     private final int gridPlacementId;
-
     private ImageState imageState;
-
     private String name;
-
     private final String extensionType;
-
     private final int width;
-
     private final int height;
-
+    @Setter
     private byte[] data;
 
 
@@ -68,46 +63,6 @@ public class Image {
         } finally {
             reader.dispose();
         }
-    }
-
-    public int getDatabaseId() {
-        return databaseId;
-    }
-
-    public int getGridPlacementId() {
-        return gridPlacementId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getExtensionType() {
-        return extensionType;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public byte[] getData() {
-        return data;
-    }
-
-    public void setData(byte[] data) {
-        this.data = data;
-    }
-
-    public ImageState getImageState() {
-        return imageState;
     }
 }
 
