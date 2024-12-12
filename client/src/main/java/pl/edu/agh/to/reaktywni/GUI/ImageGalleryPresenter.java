@@ -9,15 +9,16 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.springframework.stereotype.Component;
-import pl.edu.agh.to.reaktywni.model.FilesToImagesConverter;
-import pl.edu.agh.to.reaktywni.model.Image;
-import pl.edu.agh.to.reaktywni.model.ImagePipeline;
-import pl.edu.agh.to.reaktywni.model.ImageState;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import pl.edu.agh.to.reaktywni.util.FilesToImagesConverter;
+import pl.edu.agh.to.reaktywni.model.Image;
+import pl.edu.agh.to.reaktywni.model.ImagePipeline;
+import pl.edu.agh.to.reaktywni.model.ImageState;
+
 
 @Component
 public class ImageGalleryPresenter {
@@ -60,7 +61,7 @@ public class ImageGalleryPresenter {
         addStartPlaceholdersToGrid(count);
         AtomicInteger startImagesCounter = new AtomicInteger(0);
         imagePipeline.getThumbnails()
-                //.delayElements(Duration.ofMillis(1000))
+                //.delayElements(Duration.ofMillis(300)) // simulate connection latency
                 .subscribe(image -> replacePlaceholderWithImage(image, startImagesCounter.getAndIncrement()),
                         e -> System.err.println("Error: " + e.getMessage()),
                         () -> System.out.println("Wczytano wszystkie obrazy"));
@@ -73,7 +74,6 @@ public class ImageGalleryPresenter {
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Image Files", "*.jpg", "*.jpeg", "*.png", "*.gif")
         );
-
         files = fileChooser.showOpenMultipleDialog(null);
         if (files != null) {
             filesSelectedLabel.setText("Wybrano " + files.size() + " obrazów");
@@ -115,7 +115,6 @@ public class ImageGalleryPresenter {
         for (Image image : images) {
             ImageVBox imageVBox = new ImageVBox(image.getName());
             final int index = gridIndex++;
-            //System.out.println("GridId: " + image.getGridPlacementId() + " | Index: " + index);
             imageVBoxFromGridPlacementId.put(image.getGridPlacementId(), imageVBox);
             Platform.runLater(() -> gridPane.add(imageVBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
         }

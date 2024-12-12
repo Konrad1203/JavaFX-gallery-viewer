@@ -7,7 +7,6 @@ import pl.edu.agh.to.reaktywni.util.Resizer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
 import java.util.Optional;
 
 
@@ -41,7 +40,6 @@ public class ImageService {
     }
 
     public Flux<Image> processImages(Flux<Image> images) {
-
         return images
                 .doOnNext(this::printImageData)
                 .doOnNext(this::saveImage)

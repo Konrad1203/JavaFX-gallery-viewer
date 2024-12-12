@@ -8,11 +8,11 @@ import javafx.stage.Stage;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+import java.io.IOException;
+
 import pl.edu.agh.to.reaktywni.ImageGalleryApp;
 import pl.edu.agh.to.reaktywni.model.Image;
-import reactor.core.publisher.Mono;
-
-import java.io.IOException;
 
 
 @Component

@@ -8,6 +8,7 @@ import pl.edu.agh.to.reaktywni.util.Base64ImageDataEncoder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+
 @Component
 public class ServerClient {
 
@@ -26,8 +27,7 @@ public class ServerClient {
     }
 
     public Flux<Image> sendImages(Flux<Image> images) {
-        images.map(Base64ImageDataEncoder::encode);
-                //.doOnNext(image -> System.out.println("Send: " + image.getName() + " | GridID: " + image.getGridPlacementId() + " | DB_ID: " + image.getDatabaseId()));
+        images.doOnNext(Base64ImageDataEncoder::encode);
 
         return webClient.post()
                 .uri("/images")
@@ -40,7 +40,7 @@ public class ServerClient {
 
     public Flux<Image> getThumbnails() {
         return webClient.get()
-                .uri("/images")
+                .uri("/images/thumbnails")
                 .retrieve()
                 .bodyToFlux(Image.class)
                 .doOnError(e -> System.err.println("Error: " + e.getMessage()));

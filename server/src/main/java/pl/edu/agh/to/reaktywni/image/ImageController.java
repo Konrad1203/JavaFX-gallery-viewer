@@ -30,7 +30,7 @@ public class ImageController {
         }
     }
 
-    @GetMapping
+    @GetMapping("/thumbnails")
     public Flux<Image> getThumbnails() {
         return imageService.getThumbnails();
     }

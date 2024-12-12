@@ -3,6 +3,7 @@ package pl.edu.agh.to.reaktywni.thumbnail;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+
 @Getter
 @Entity
 public class Thumbnail {
@@ -19,9 +20,6 @@ public class Thumbnail {
 
     @Lob
     private byte[] data;
-
-    private int state;
-
 
     public Thumbnail() {}
 
