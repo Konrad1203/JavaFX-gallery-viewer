@@ -17,6 +17,7 @@ import pl.edu.agh.to.reaktywni.model.ImageState;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class ImageGalleryPresenter {
@@ -44,6 +45,7 @@ public class ImageGalleryPresenter {
     );
 
     private final ImagePipeline imagePipeline;
+
     private final StageInitializer stageInitializer;
 
 
@@ -56,11 +58,13 @@ public class ImageGalleryPresenter {
         imagePipeline.setPresenter(this);
         Long count = imagePipeline.getImagesCount().block();
         if (count == null) throw new RuntimeException("Nie udało się pobrać liczby obrazów");
-        addPlaceholdersToGrid(count);
+        addStartPlaceholdersToGrid(count);
+        AtomicInteger startImagesCounter = new AtomicInteger(0);
         imagePipeline.getThumbnails()
-                .doOnNext(this::placeImageToGrid)
-                .doOnComplete(() -> System.out.println("Wczytano wszystkie obrazy"))
-                .subscribe();
+                //.delayElements(Duration.ofMillis(1000))
+                .subscribe(image -> replacePlaceholderWithImage(image, startImagesCounter.getAndIncrement()),
+                        e -> System.err.println("Error: " + e.getMessage()),
+                        () -> System.out.println("Wczytano wszystkie obrazy"));
     }
 
     @FXML
@@ -82,13 +86,14 @@ public class ImageGalleryPresenter {
     private void sendAndReceiveImages() {
         if (files == null) return;
         List<Image> imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex);
-        addPlaceholdersToGrid(imagesToSend);
+        addNamedPlaceholdersToGrid(imagesToSend);
         new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend)).start();
     }
 
     private void createRowsIfRequired(long count) {
+        final int current_gridIndex = gridIndex;
         Platform.runLater(() -> {
-            int requiredRows = (int) ((gridIndex + count) / gridPane.getColumnCount()) + 1;
+            int requiredRows = (int) ((current_gridIndex + count) / gridPane.getColumnCount());
             for (int i = gridPane.getRowCount(); i < requiredRows; i++) {
                 gridPane.addRow(i);
                 gridPane.getRowConstraints().add(gridPane.getRowConstraints().getFirst());
@@ -96,57 +101,39 @@ public class ImageGalleryPresenter {
         });
     }
 
-    // To be removed if the server sends the images names
-    private void addPlaceholdersToGrid(long count) {
+    private void addStartPlaceholdersToGrid(long count) {
         createRowsIfRequired(count);
         for (int i = 0; i < count; i++) {
-            final int index = i;
-            Platform.runLater(() ->
-                    gridPane.add(new ImageView(placeholder),
-                            index % gridPane.getColumnCount(),
-                            index / gridPane.getColumnCount()
-                    )
-            );
-        }
-    }
-
-    // To be removed if the server sends the images names
-    private void placeImageToGrid(Image image) {
-        ImageVBox imageVBox = new ImageVBox(image.getName());
-        if (image.getImageState() == ImageState.FAILURE) {
-            imageVBox.imageView.setImage(error);
-            imageVBox.setName("Błąd: " + image.getName());
-        } else {
-            imageVBox.setImage(image);
-        }
-        Platform.runLater(() -> {
+            ImageVBox imageVBox = new ImageVBox("............");
             final int index = gridIndex++;
-            final int row = index / gridPane.getColumnCount();
-            final int col = index % gridPane.getColumnCount();
-            gridPane.getChildren().removeIf(node -> GridPane.getRowIndex(node) == row && GridPane.getColumnIndex(node) == col);
-            gridPane.add(imageVBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount());
-        });
+            imageVBoxFromGridPlacementId.put(index, imageVBox);
+            Platform.runLater(() -> gridPane.add(imageVBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
+        }
     }
 
-    private void addPlaceholdersToGrid(List<Image> images) {
+    private void addNamedPlaceholdersToGrid(List<Image> images) {
         createRowsIfRequired(images.size());
         for (Image image : images) {
             ImageVBox imageVBox = new ImageVBox(image.getName());
             final int index = gridIndex++;
+            //System.out.println("GridId: " + image.getGridPlacementId() + " | Index: " + index);
             imageVBoxFromGridPlacementId.put(image.getGridPlacementId(), imageVBox);
             Platform.runLater(() -> gridPane.add(imageVBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
         }
     }
 
-    public void replacePlaceholderWithImage(Image image) {
+    public void replacePlaceholderWithImage(Image image, int gridPlacementId) {
         Platform.runLater(() -> {
-            ImageVBox imageVBox = imageVBoxFromGridPlacementId.remove(image.getGridPlacementId());
+            ImageVBox imageVBox = imageVBoxFromGridPlacementId.remove(gridPlacementId);
             if (image.getImageState() == ImageState.FAILURE) {
                 imageVBox.imageView.setImage(error);
                 imageVBox.setName("Błąd: " + image.getName());
                 return;
             }
             imageVBox.setImage(image);
+            if (!imageVBox.isNameFilled()) {
+                imageVBox.setName(image.getName());
+            }
         });
     }
 
@@ -174,6 +161,10 @@ public class ImageGalleryPresenter {
 
         public void setName(String name) {
             nameLabel.setText(name);
+        }
+
+        public boolean isNameFilled() {
+            return !nameLabel.getText().startsWith("...");
         }
     }
 }

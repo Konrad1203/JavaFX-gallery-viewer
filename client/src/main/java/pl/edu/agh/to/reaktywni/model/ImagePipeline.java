@@ -6,7 +6,6 @@ import pl.edu.agh.to.reaktywni.ServerClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
 import java.util.List;
 
 
@@ -27,8 +26,8 @@ public class ImagePipeline {
     public void sendAndReceiveImages(List<Image> images) {
         System.out.println("Wysylam obrazy: " + images.size());
         serverClient.sendImages(Flux.fromIterable(images))
-                .doOnNext(image -> System.out.println("Send: " + image.getName() + " | GridID: " + image.getGridPlacementId() + " | DB_ID: " + image.getDatabaseId()))
-                .doOnNext(presenter::replacePlaceholderWithImage)
+                //.doOnNext(image -> System.out.println("Send: " + image.getName() + " | GridID: " + image.getGridPlacementId() + " | DB_ID: " + image.getDatabaseId()))
+                .doOnNext(image -> presenter.replacePlaceholderWithImage(image, image.getGridPlacementId()))
                 .blockLast();
     }
 

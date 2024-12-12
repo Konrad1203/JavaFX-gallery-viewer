@@ -36,10 +36,10 @@ public class BigImagePresenter {
     }
 
     public void setName(String name) {
-        nameLabel.setText("Name: " + name);
+        nameLabel.setText(name);
     }
 
     public void setSize(int width, int height) {
-        sizeLabel.setText("Size: " + width + "x" + height);
+        sizeLabel.setText(width + "x" + height);
     }
 }
