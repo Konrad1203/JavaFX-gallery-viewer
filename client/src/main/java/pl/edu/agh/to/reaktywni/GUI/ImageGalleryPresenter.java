@@ -54,16 +54,20 @@ public class ImageGalleryPresenter {
     }
 
     public void initialize() {
-        imagePipeline.setPresenter(this);
-        Long count = imagePipeline.getImagesCount().block();
-        if (count == null) throw new RuntimeException("Nie udało się pobrać liczby obrazów");
-        addStartPlaceholdersToGrid(count);
-        AtomicInteger startImagesCounter = new AtomicInteger(0);
-        imagePipeline.getThumbnails()
-                //.delayElements(Duration.ofMillis(1000))
-                .subscribe(image -> replacePlaceholderWithImage(image, startImagesCounter.getAndIncrement()),
-                        e -> System.err.println("Error: " + e.getMessage()),
-                        () -> System.out.println("Wczytano wszystkie obrazy"));
+        try {
+            imagePipeline.setPresenter(this);
+            Long count = imagePipeline.getImagesCount().block();
+            if (count == null) throw new RuntimeException("Nie udało się pobrać liczby obrazów");
+            addStartPlaceholdersToGrid(count);
+            AtomicInteger startImagesCounter = new AtomicInteger(0);
+            imagePipeline.getThumbnails()
+                    .subscribe(image -> replacePlaceholderWithImage(image, startImagesCounter.getAndIncrement()),
+                            e -> System.err.println("Error: " + e.getMessage()),
+                            () -> System.out.println("Wczytano wszystkie obrazy"));
+        } catch (Exception e) {
+            System.err.println("Initialization failed: " + e.getMessage());
+            Platform.runLater(Platform::exit);
+        }
     }
 
     @FXML

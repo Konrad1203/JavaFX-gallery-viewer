@@ -22,7 +22,7 @@ public class ServerClient {
             .uri("/images/{id}", id)
             .retrieve()
             .bodyToMono(Image.class)
-            .doOnError(e -> System.err.println("Error: " + e.getMessage()));
+            .doOnError(e -> System.err.println("Error1: " + e.getMessage()));
     }
 
     public Flux<Image> sendImages(Flux<Image> images) {
@@ -51,6 +51,7 @@ public class ServerClient {
                 .retrieve()
                 .bodyToMono(Long.class)
                 .doOnError(e -> System.err.println("Error: " + e.getMessage()));
+
     }
 }
 
