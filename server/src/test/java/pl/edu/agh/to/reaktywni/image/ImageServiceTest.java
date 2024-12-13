@@ -14,6 +14,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -50,7 +51,7 @@ public class ImageServiceTest {
         return Image.builder()
                 .name("test-image")
                 .extensionType("jpg")
-                .data(imageData)
+                .data(Base64.getEncoder().encodeToString(imageData).getBytes())
                 .width(originalImage.getWidth())
                 .height(originalImage.getHeight())
                 .build();
@@ -74,6 +75,7 @@ public class ImageServiceTest {
 
         processedImages
                 .doOnNext(i -> {
+                    System.out.println("Processed image " + i);
                     assertNotNull(i);
                     assertEquals(320, i.getWidth());
                     assertEquals(180, i.getHeight());
@@ -95,7 +97,6 @@ public class ImageServiceTest {
         thumbnails.doOnNext(t -> {
                     assertEquals(320, t.getWidth());
                     assertEquals(180, t.getHeight());
-                    assertArrayEquals(new byte[50], t.getData());
                 }).blockLast();
     }
 

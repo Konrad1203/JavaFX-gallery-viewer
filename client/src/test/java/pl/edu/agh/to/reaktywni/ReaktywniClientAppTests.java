@@ -11,8 +11,15 @@ import pl.edu.agh.to.reaktywni.model.Image;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.FileImageInputStream;
+import javax.imageio.stream.ImageInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.util.Iterator;
 import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -36,8 +43,39 @@ class ReaktywniClientAppTests {
 
 	private ServerClient serverClient;
 
-	private Image loadImage(String imageName, int id) {
-		return Image.createFromFile(id, new File("src/test/resources/" + imageName));
+	private Image loadImage(String imageName, int id) throws IOException {
+		File file = new File("src/test/resources/" + imageName);
+		String extensionType = getFileExtension(file.getName());
+		int[] size = getImageDimensions(file, extensionType);
+		return Image.builder()
+				.gridPlacementId(id)
+				.name(file.getName())
+				.extensionType(extensionType)
+				.width(size[0])
+				.height(size[1])
+				.data(Files.readAllBytes(file.toPath()))
+				.build();
+	}
+
+	private static String getFileExtension(String fileName) {
+		int dotIndex = fileName.lastIndexOf(".");
+		if (dotIndex <= 0) throw new IllegalArgumentException("No extension for file: " + fileName);
+		return fileName.substring(dotIndex + 1);
+	}
+
+	private static int[] getImageDimensions(File imgFile, String extensionType) throws IOException {
+		Iterator<ImageReader> it = ImageIO.getImageReadersBySuffix(extensionType);
+		if (!it.hasNext()) throw new IOException("File format not supported: " + imgFile.getAbsolutePath());
+		ImageReader reader = it.next();
+
+		try (ImageInputStream stream = new FileImageInputStream(imgFile)) {
+			reader.setInput(stream);
+			return new int[]{reader.getWidth(reader.getMinIndex()), reader.getHeight(reader.getMinIndex())};
+		} catch (IOException e) {
+			throw new IOException("Error reading image dimensions for file: " + imgFile.getAbsolutePath(), e);
+		} finally {
+			reader.dispose();
+		}
 	}
 
 	@BeforeEach
@@ -48,7 +86,7 @@ class ReaktywniClientAppTests {
 	}
 
 	@Test
-	public void testSendImages() {
+	public void testSendImages() throws IOException {
 		Flux<Image> images = Flux.just(
 				loadImage("test-pepe.jpg", 0),
 				loadImage("test-png.png", 1)
