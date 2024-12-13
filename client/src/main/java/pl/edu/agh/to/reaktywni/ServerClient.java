@@ -28,7 +28,6 @@ public class ServerClient {
     public Flux<Image> sendImages(Flux<Image> images) {
         images.map(Base64ImageDataEncoder::encode);
                 //.doOnNext(image -> System.out.println("Send: " + image.getName() + " | GridID: " + image.getGridPlacementId() + " | DB_ID: " + image.getDatabaseId()));
-
         return webClient.post()
                 .uri("/images")
                 .contentType(MediaType.APPLICATION_NDJSON)

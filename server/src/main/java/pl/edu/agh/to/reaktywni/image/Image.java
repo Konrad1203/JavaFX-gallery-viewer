@@ -23,8 +23,10 @@ public class Image {
     @Setter
     private ImageState imageState;
 
+    @Setter
     private String name;
 
+    @Setter
     private String extensionType;
 
     @Setter
