@@ -10,5 +10,4 @@ public class ReaktywniServerApp {
 	public static void main(String[] args) {
 		SpringApplication.run(ReaktywniServerApp.class, args);
 	}
-
 }

@@ -19,8 +19,8 @@ public class Image {
     @Transient
     private int gridPlacementId;
 
-    @Transient
     @Setter
+    @Transient
     private ImageState imageState;
 
     @Setter
@@ -38,5 +38,4 @@ public class Image {
     @Setter
     @Lob
     private byte[] data;
-
 }

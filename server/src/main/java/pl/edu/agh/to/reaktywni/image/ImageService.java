@@ -3,11 +3,11 @@ package pl.edu.agh.to.reaktywni.image;
 import org.springframework.stereotype.Service;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
+import pl.edu.agh.to.reaktywni.util.Base64ImageDataCodec;
 import pl.edu.agh.to.reaktywni.util.Resizer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
 import java.util.Optional;
 
 
@@ -28,12 +28,16 @@ public class ImageService {
     }
 
     public Optional<Image> getImage(int id) {
-        return imageRepository.findById(id);
+        return imageRepository.findById(id).map(image -> {
+            Base64ImageDataCodec.encode(image);
+            return image;
+        });
     }
 
     public Flux<Image> getThumbnails() {
         return Flux.fromIterable(thumbnailRepository.findAll())
-                .map(this::createImageFromThumbnail);
+                .map(this::createImageFromThumbnail)
+                .doOnNext(Base64ImageDataCodec::encode);
     }
 
     public long getImagesCount() {
@@ -41,14 +45,15 @@ public class ImageService {
     }
 
     public Flux<Image> processImages(Flux<Image> images) {
-
         return images
                 .doOnNext(this::printImageData)
+                .doOnNext(Base64ImageDataCodec::decode)
                 .doOnNext(this::saveImage)
                 .flatMap(image -> Mono.fromCallable(() -> imageResizer.resize(image, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT))
                         .subscribeOn(Schedulers.boundedElastic())
                         .doOnNext(this::printProcessedImageData)
                         .doOnNext(this::createAndSaveThumbnail)
+                        .doOnNext(Base64ImageDataCodec::encode)
                 );
     }
 
