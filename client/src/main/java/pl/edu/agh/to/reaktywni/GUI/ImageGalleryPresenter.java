@@ -11,6 +11,7 @@ import javafx.stage.FileChooser;
 import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -87,11 +88,16 @@ public class ImageGalleryPresenter {
     }
 
     @FXML
-    private void sendAndReceiveImages() {
+    private void sendAndReceiveImages(){
         if (files == null) return;
-        List<Image> imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex);
-        addNamedPlaceholdersToGrid(imagesToSend);
-        new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend)).start();
+        List<Image> imagesToSend;
+        try {
+            imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex);
+            addNamedPlaceholdersToGrid(imagesToSend);
+            new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend)).start();
+        }catch (IOException e){
+            //todo handle exception
+        }
     }
 
     private void createRowsIfRequired(long count) {

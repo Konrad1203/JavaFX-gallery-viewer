@@ -15,7 +15,7 @@ import java.util.List;
 
 public interface FilesToImagesConverter {
 
-    static List<Image> convertWithPositionsCounting(List<File> files, int gridPlacementCounter) {
+    static List<Image> convertWithPositionsCounting(List<File> files, int gridPlacementCounter) throws IOException{
         List<Image> images = new ArrayList<>();
         for (File file : files) {
             images.add(createFromFile(gridPlacementCounter, file));
@@ -24,23 +24,18 @@ public interface FilesToImagesConverter {
         return images;
     }
 
-    private static Image createFromFile(int gridPlacementId, File file) {
-        try {
-            String extensionType = getFileExtension(file.getName());
-            int[] size = getImageDimensions(file, extensionType);
+    private static Image createFromFile(int gridPlacementId, File file) throws IOException {
+        String extensionType = getFileExtension(file.getName());
+        int[] size = getImageDimensions(file, extensionType);
 
-            return Image.getBuilder()
-                    .gridPlacementId(gridPlacementId)
-                    .name(file.getName())
-                    .extensionType(extensionType)
-                    .width(size[0])
-                    .height(size[1])
-                    .data(Files.readAllBytes(file.toPath()))
-                    .build();
-
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading image file: " + file.getAbsolutePath(), e);
-        }
+        return Image.getBuilder()
+                .gridPlacementId(gridPlacementId)
+                .name(file.getName())
+                .extensionType(extensionType)
+                .width(size[0])
+                .height(size[1])
+                .data(Files.readAllBytes(file.toPath()))
+                .build();
     }
 
     private static String getFileExtension(String fileName) {
