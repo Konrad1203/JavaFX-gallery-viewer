@@ -13,7 +13,6 @@ import java.util.Optional;
 
 @Service
 public class ImageService {
-
     private final int THUMBNAIL_WIDTH = 320;
     private final int THUMBNAIL_HEIGHT = 180;
 
@@ -37,6 +36,8 @@ public class ImageService {
     public Flux<Image> getThumbnails() {
         return Flux.fromIterable(thumbnailRepository.findAll())
                 .map(this::createImageFromThumbnail)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
@@ -80,21 +81,16 @@ public class ImageService {
         }
     }
 
-    public Image createImageFromThumbnail(Thumbnail thumbnail) {
-        Optional<ImageMetaData> optionalImage = imageRepository.findByDatabaseId(thumbnail.getImageId());
-        if (optionalImage.isPresent()) {
-            ImageMetaData imageMetaData = optionalImage.get();
-
-            return Image.builder()
-                    .name(imageMetaData.getName())
-                    .extensionType(imageMetaData.getExtensionType())
-                    .width(thumbnail.getWidth())
-                    .height(thumbnail.getHeight())
-                    .data(thumbnail.getData())
-                    .databaseId(thumbnail.getImageId())
-                    .build();
-        } else {
-            throw new RuntimeException("Image not found");
-        }
+    public Optional<Image> createImageFromThumbnail(Thumbnail thumbnail) {
+        return imageRepository.findByDatabaseId(thumbnail.getImageId())
+                .map(imageMetaData -> Image.builder()
+                                    .name(imageMetaData.getName())
+                                    .extensionType(imageMetaData.getExtensionType())
+                                    .width(thumbnail.getWidth())
+                                    .height(thumbnail.getHeight())
+                                    .data(thumbnail.getData())
+                                    .databaseId(thumbnail.getImageId())
+                                    .build()
+                );
     }
 }
