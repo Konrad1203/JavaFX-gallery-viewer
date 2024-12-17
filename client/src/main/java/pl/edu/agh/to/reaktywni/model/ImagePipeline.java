@@ -26,14 +26,20 @@ public class ImagePipeline {
 
     public void sendAndReceiveImages(List<Image> images) {
         System.out.println("Wysylam obrazy: " + images.size());
-        serverClient.sendImages(Flux.fromIterable(images).doOnNext(Base64ImageDataCodec::encode))
+        Flux<Image> receivedImages = serverClient.sendImages(Flux.fromIterable(images).doOnNext(Base64ImageDataCodec::encode));
+
+        receivedImages
                 .doOnNext(Base64ImageDataCodec::decode)
+                .map(WrongImage::convertIfStateEqualsFailure)
                 .doOnNext(image -> presenter.replacePlaceholderWithImage(image, image.getGridPlacementId()))
                 .blockLast();
     }
 
     public Flux<Image> getThumbnails() {
-        return serverClient.getThumbnails().doOnNext(Base64ImageDataCodec::decode);
+        return serverClient.getThumbnails()
+                .doOnNext(Base64ImageDataCodec::decode)
+                .doOnError(e -> System.err.println("getThumbnailsError: " + e.getMessage()));
+
     }
 
     public Mono<Long> getImagesCount() {

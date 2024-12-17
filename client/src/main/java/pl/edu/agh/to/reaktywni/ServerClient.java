@@ -40,8 +40,7 @@ public class ServerClient {
         return webClient.get()
                 .uri("/images/thumbnails")
                 .retrieve()
-                .bodyToFlux(Image.class)
-                .doOnError(e -> System.err.println("getThumbnailsError: " + e.getMessage()));
+                .bodyToFlux(Image.class);
     }
 
     public Mono<Long> getImagesCount() {

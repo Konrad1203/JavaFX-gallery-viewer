@@ -42,11 +42,6 @@ public class ImageGalleryPresenter {
             200, 120, false, true
     );
 
-    private static final javafx.scene.image.Image error = new javafx.scene.image.Image(
-            Objects.requireNonNull(ImageGalleryPresenter.class.getResourceAsStream("/GUI/error.png")),
-            200, 120, false, true
-    );
-
     private final ImagePipeline imagePipeline;
 
     private final StageInitializer stageInitializer;
@@ -141,9 +136,7 @@ public class ImageGalleryPresenter {
         Platform.runLater(() -> {
             ImageVBox imageVBox = imageVBoxFromGridPlacementId.remove(gridPlacementId);
             if (image.getImageState() == ImageState.FAILURE) {
-                imageVBox.imageView.setImage(error);
-                imageVBox.setName("Błąd: " + image.getName());
-                return;
+                imageVBox.setName("Błąd: " + image.getName());;
             }
             imageVBox.setImage(image);
             if (!imageVBox.isNameFilled()) {

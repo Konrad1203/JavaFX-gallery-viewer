@@ -27,9 +27,13 @@ public class WrongImage {
     }
 
     public static Image convert(Image image){
-        image.setData(image.getData());
-        image.setWidth(image.getWidth());
-        image.setHeight(image.getHeight());
+        image.setData(WrongImage.image.getData());
+        image.setWidth(WrongImage.image.getWidth());
+        image.setHeight(WrongImage.image.getHeight());
         return image;
+    }
+
+    public static Image convertIfStateEqualsFailure(Image image){
+        return image.getImageState().equals(ImageState.FAILURE) ? convert(image) : image;
     }
 }
