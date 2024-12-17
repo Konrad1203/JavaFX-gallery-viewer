@@ -22,7 +22,7 @@ public class ServerClient {
             .uri("/images/{id}", id)
             .retrieve()
             .bodyToMono(Image.class)
-            .doOnError(e -> System.err.println("Error1: " + e.getMessage()));
+            .doOnError(e -> System.err.println("getFullImageError: " + e.getMessage()));
     }
 
     public Flux<Image> sendImages(Flux<Image> images) {
@@ -32,7 +32,7 @@ public class ServerClient {
                 .body(images, Image.class)
                 .retrieve()
                 .bodyToFlux(Image.class)
-                .doOnError(e -> System.err.println("Error: " + e.getMessage()));
+                .doOnError(e -> System.err.println("sendImagesError: " + e.getMessage()));
     }
 
     public Flux<Image> getThumbnails() {
@@ -40,7 +40,7 @@ public class ServerClient {
                 .uri("/images/thumbnails")
                 .retrieve()
                 .bodyToFlux(Image.class)
-                .doOnError(e -> System.err.println("Error: " + e.getMessage()));
+                .doOnError(e -> System.err.println("getThumbnailsError: " + e.getMessage()));
     }
 
     public Mono<Long> getImagesCount() {
@@ -48,7 +48,7 @@ public class ServerClient {
                 .uri("/images/count")
                 .retrieve()
                 .bodyToMono(Long.class)
-                .doOnError(e -> System.err.println("Error: " + e.getMessage()));
+                .doOnError(e -> System.err.println("getImagesCountError: " + e.getMessage()));
 
     }
 }

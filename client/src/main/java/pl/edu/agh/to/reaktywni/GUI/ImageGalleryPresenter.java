@@ -3,6 +3,7 @@ package pl.edu.agh.to.reaktywni.GUI;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -60,6 +61,7 @@ public class ImageGalleryPresenter {
             imagePipeline.setPresenter(this);
             Long count = imagePipeline.getImagesCount().block();
             if (count == null) throw new RuntimeException("Nie udało się pobrać liczby obrazów");
+            if (count == 0) return;
             addStartPlaceholdersToGrid(count);
             AtomicInteger startImagesCounter = new AtomicInteger(0);
             imagePipeline.getThumbnails()
@@ -88,15 +90,19 @@ public class ImageGalleryPresenter {
     }
 
     @FXML
-    private void sendAndReceiveImages(){
+    private void sendAndReceiveImages() {
         if (files == null) return;
         List<Image> imagesToSend;
         try {
             imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex);
             addNamedPlaceholdersToGrid(imagesToSend);
             new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend)).start();
-        }catch (IOException e){
-            //todo handle exception
+        } catch (IOException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Błąd przetwarzania obrazów.");
+            alert.setHeaderText("Nie udało się przetworzyć obrazów z plików.");
+            alert.setContentText("Sprawdź, czy wybrane pliki są obrazami.");
+            alert.showAndWait();
         }
     }
 

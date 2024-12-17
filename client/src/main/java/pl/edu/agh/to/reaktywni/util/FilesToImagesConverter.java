@@ -15,7 +15,7 @@ import java.util.List;
 
 public interface FilesToImagesConverter {
 
-    static List<Image> convertWithPositionsCounting(List<File> files, int gridPlacementCounter) throws IOException{
+    static List<Image> convertWithPositionsCounting(List<File> files, int gridPlacementCounter) throws IOException {
         List<Image> images = new ArrayList<>();
         for (File file : files) {
             images.add(createFromFile(gridPlacementCounter, file));

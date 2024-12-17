@@ -13,6 +13,7 @@ import java.util.Optional;
 
 @Service
 public class ImageService {
+
     private final int THUMBNAIL_WIDTH = 320;
     private final int THUMBNAIL_HEIGHT = 180;
 
@@ -46,7 +47,7 @@ public class ImageService {
     }
 
     public Flux<Image> processImages(Flux<Image> images) {
-        return images
+        return images  //.log()
                 .doOnNext(this::printImageData)
                 .doOnNext(Base64ImageDataCodec::decode)
                 .doOnNext(this::saveImage)
@@ -63,9 +64,9 @@ public class ImageService {
     }
 
     private void printProcessedImageData(Image image) {
-        if(image.getImageState().equals(ImageState.FAILURE)) {
+        if (image.getImageState().equals(ImageState.FAILURE)) {
             System.out.println("Failed to process image: " + image.getName());
-        }else {
+        } else {
             System.out.println("Processed image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
         }
     }
@@ -75,7 +76,7 @@ public class ImageService {
     }
 
     public void createAndSaveThumbnail(Image image) {
-        if(image.getImageState().equals(ImageState.SUCCESS)) {
+        if (image.getImageState().equals(ImageState.SUCCESS)) {
             Thumbnail thumbnail = new Thumbnail(image.getDatabaseId(), THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, image.getData());
             thumbnailRepository.save(thumbnail);
         }
