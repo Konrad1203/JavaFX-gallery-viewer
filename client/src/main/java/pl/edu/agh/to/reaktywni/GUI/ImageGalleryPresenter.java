@@ -99,9 +99,9 @@ public class ImageGalleryPresenter {
             new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend)).start();
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Błąd przetwarzania obrazów.");
-            alert.setHeaderText("Nie udało się przetworzyć obrazów z plików.");
-            alert.setContentText("Sprawdź, czy wybrane pliki są obrazami.");
+            alert.setTitle("Image processing error");
+            alert.setHeaderText("Failed to process images from files");
+            alert.setContentText("Check if the selected files are images");
             alert.showAndWait();
         }
     }

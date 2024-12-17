@@ -1,4 +1,4 @@
-package pl.edu.agh.to.reaktywni;
+package pl.edu.agh.to.reaktywni.config;
 
 import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.ObjectMapper;
