@@ -18,10 +18,10 @@ public class Image {
     private String name;
 
     private final String extensionType;
-
-    private final int width;
-
-    private final int height;
+    @Setter
+    private int width;
+    @Setter
+    private int height;
 
     @Setter
     private byte[] data;

@@ -1,7 +1,9 @@
 package pl.edu.agh.to.reaktywni.image;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -26,7 +28,7 @@ public class ImageController {
             return Mono.just(image.get());
         } else {
             System.out.println("Zdjęcie nie znalezione");
-            return Mono.error(new RuntimeException("Image not found"));
+            return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found"));
         }
     }
 

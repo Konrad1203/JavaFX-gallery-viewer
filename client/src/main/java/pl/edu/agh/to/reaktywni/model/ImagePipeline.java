@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import pl.edu.agh.to.reaktywni.GUI.ImageGalleryPresenter;
 import pl.edu.agh.to.reaktywni.ServerClient;
 import pl.edu.agh.to.reaktywni.util.Base64ImageDataCodec;
+import pl.edu.agh.to.reaktywni.util.WrongImage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -40,6 +41,12 @@ public class ImagePipeline {
     }
 
     public Mono<Image> getFullImage(int id) {
-        return serverClient.getFullImage(id).doOnNext(Base64ImageDataCodec::decode);
+        return serverClient.getFullImage(id)
+                .doOnNext(Base64ImageDataCodec::decode)
+                .onErrorResume(e -> {
+                    System.err.println("getFullImageError: " + e.getMessage());
+                    //todo log error
+                    return Mono.just(WrongImage.getWrongImage());
+                });
     }
 }

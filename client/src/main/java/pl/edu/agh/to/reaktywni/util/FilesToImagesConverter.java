@@ -24,7 +24,7 @@ public interface FilesToImagesConverter {
         return images;
     }
 
-    private static Image createFromFile(int gridPlacementId, File file) throws IOException {
+    static Image createFromFile(int gridPlacementId, File file) throws IOException {
         String extensionType = getFileExtension(file.getName());
         int[] size = getImageDimensions(file, extensionType);
 
