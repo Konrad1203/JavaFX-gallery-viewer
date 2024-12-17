@@ -42,8 +42,8 @@ public class ImagePipeline {
 
     }
 
-    public Mono<Long> getImagesCount() {
-        return serverClient.getImagesCount();
+    public Mono<Long> getThumbnailsCount() {
+        return serverClient.getThumbnailsCount();
     }
 
     public Mono<Image> getFullImage(int id) {

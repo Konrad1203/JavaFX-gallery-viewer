@@ -54,7 +54,7 @@ public class ImageGalleryPresenter {
     public void initialize() {
         try {
             imagePipeline.setPresenter(this);
-            Long count = imagePipeline.getImagesCount().block();
+            Long count = imagePipeline.getThumbnailsCount().block();
             if (count == null) throw new RuntimeException("Nie udało się pobrać liczby obrazów");
             if (count == 0) return;
             addStartPlaceholdersToGrid(count);

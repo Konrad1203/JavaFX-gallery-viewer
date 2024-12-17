@@ -42,6 +42,11 @@ public class ImageController {
         return imageService.getImagesCount();
     }
 
+    @GetMapping("/thumbnails/count")
+    public long getThumbnailsCount() {
+        return imageService.getThumbnailsCount();
+    }
+
     @PostMapping(consumes = MediaType.APPLICATION_NDJSON_VALUE, produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Flux<Image> postImages(@RequestBody Flux<Image> images) {
         return imageService.processImages(images);

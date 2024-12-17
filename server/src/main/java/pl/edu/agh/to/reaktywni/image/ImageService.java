@@ -42,6 +42,10 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
+    public long getThumbnailsCount() {
+        return thumbnailRepository.count();
+    }
+
     public long getImagesCount() {
         return imageRepository.count();
     }

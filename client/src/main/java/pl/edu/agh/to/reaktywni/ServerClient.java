@@ -4,8 +4,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import pl.edu.agh.to.reaktywni.model.Image;
-import pl.edu.agh.to.reaktywni.model.ImageState;
-import pl.edu.agh.to.reaktywni.util.WrongImage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -43,9 +41,9 @@ public class ServerClient {
                 .bodyToFlux(Image.class);
     }
 
-    public Mono<Long> getImagesCount() {
+    public Mono<Long> getThumbnailsCount() {
         return webClient.get()
-                .uri("/images/count")
+                .uri("/images/thumbnails/count")
                 .retrieve()
                 .bodyToMono(Long.class)
                 .doOnError(e -> System.err.println("getImagesCountError: " + e.getMessage()));
