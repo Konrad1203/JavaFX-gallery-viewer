@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
 
+import reactor.test.StepVerifier;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -73,15 +75,15 @@ public class ImageServiceTest {
 
         Flux<Image> processedImages = imageService.processImages(Flux.just(image));
 
-        processedImages
-                .doOnNext(i -> {
-                    System.out.println("Processed image " + i);
+        StepVerifier.create(processedImages)
+                .expectNextMatches(i -> {
                     assertNotNull(i);
                     assertEquals(320, i.getWidth());
                     assertEquals(180, i.getHeight());
                     assertEquals("test-image", i.getName());
+                    return true;
                 })
-                .blockLast();
+                .verifyComplete();
     }
 
     @Test
@@ -94,10 +96,13 @@ public class ImageServiceTest {
 
         Flux<Image> thumbnails = imageService.getThumbnails();
 
-        thumbnails.doOnNext(t -> {
+        StepVerifier.create(thumbnails)
+                .expectNextMatches(t -> {
                     assertEquals(320, t.getWidth());
                     assertEquals(180, t.getHeight());
-                }).blockLast();
+                    return true;
+                })
+                .verifyComplete();
     }
 
     @Test
