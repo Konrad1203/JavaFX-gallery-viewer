@@ -8,11 +8,15 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 @RestController
 @RequestMapping("/images")
 public class ImageController {
+
+    private final static Logger logger = Logger.getLogger(ImageController.class.getName());
 
     private final ImageService imageService;
 
@@ -24,10 +28,10 @@ public class ImageController {
     public Mono<Image> getImage(@PathVariable int id) {
         Optional<Image> image = imageService.getImage(id);
         if (image.isPresent()) {
-            System.out.println("Zdjęcie znalezione: " + image.get().getName());
+            logger.info("Image found: " + image.get().getName());
             return Mono.just(image.get());
         } else {
-            System.out.println("Zdjęcie nie znalezione");
+            logger.log(Level.WARNING, "Image not found");
             return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found"));
         }
     }

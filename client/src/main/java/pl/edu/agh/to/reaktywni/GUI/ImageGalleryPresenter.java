@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import pl.edu.agh.to.reaktywni.util.FilesToImagesConverter;
 import pl.edu.agh.to.reaktywni.model.Image;
@@ -24,6 +26,8 @@ import pl.edu.agh.to.reaktywni.model.ImageState;
 
 @Component
 public class ImageGalleryPresenter {
+
+    private static final Logger logger = Logger.getLogger(ImageGalleryPresenter.class.getName());
 
     @FXML
     private Label filesSelectedLabel;
@@ -62,10 +66,10 @@ public class ImageGalleryPresenter {
             imagePipeline.getThumbnails()
                     //.delayElements(Duration.ofMillis(300)) // simulate connection latency
                     .subscribe(image -> replacePlaceholderWithImage(image, startImagesCounter.getAndIncrement()),
-                            e -> System.err.println("Error: " + e.getMessage()),
-                            () -> System.out.println("Wczytano wszystkie obrazy"));
+                            e -> logger.log(Level.SEVERE,"Error: " + e.getMessage()),
+                            () -> logger.info("Loaded all images"));
         } catch (Exception e) {
-            System.err.println("Initialization failed: " + e.getMessage());
+            logger.log(Level.SEVERE,"Initialization failed: " + e.getMessage());
             Platform.runLater(Platform::exit);
         }
     }

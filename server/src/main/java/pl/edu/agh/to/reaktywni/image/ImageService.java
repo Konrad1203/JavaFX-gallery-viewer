@@ -1,5 +1,6 @@
 package pl.edu.agh.to.reaktywni.image;
 
+import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
@@ -9,10 +10,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import java.util.Optional;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 
 @Service
 public class ImageService {
+
+    private final static Logger logger = Logger.getLogger(ImageService.class.getName());
 
     private final int THUMBNAIL_WIDTH = 320;
     private final int THUMBNAIL_HEIGHT = 180;
@@ -64,14 +69,14 @@ public class ImageService {
     }
 
     private void printImageData(Image image) {
-        System.out.println("Received image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
+        logger.log(Level.FINE, "Received image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
     }
 
     private void printProcessedImageData(Image image) {
         if (image.getImageState().equals(ImageState.FAILURE)) {
-            System.out.println("Failed to process image: " + image.getName());
+            logger.log(Level.FINE, "Failed to process image: " + image.getName());
         } else {
-            System.out.println("Processed image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
+            logger.log(Level.FINE, "Processed image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
         }
     }
 

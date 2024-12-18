@@ -10,10 +10,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 @Component
 public class ImagePipeline {
+    private static final Logger logger = Logger.getLogger(ImagePipeline.class.getName());
 
     private final ServerClient serverClient;
 
@@ -25,7 +28,8 @@ public class ImagePipeline {
     }
 
     public void sendAndReceiveImages(List<Image> images) {
-        System.out.println("Wysylam obrazy: " + images.size());
+        logger.info("Sending images: " + images.size());
+
         Flux<Image> receivedImages = serverClient.sendImages(Flux.fromIterable(images).doOnNext(Base64ImageDataCodec::encode));
 
         receivedImages
@@ -38,7 +42,7 @@ public class ImagePipeline {
     public Flux<Image> getThumbnails() {
         return serverClient.getThumbnails()
                 .doOnNext(Base64ImageDataCodec::decode)
-                .doOnError(e -> System.err.println("getThumbnailsError: " + e.getMessage()));
+                .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsError: " + e.getMessage()));
 
     }
 
@@ -50,8 +54,7 @@ public class ImagePipeline {
         return serverClient.getFullImage(id)
                 .doOnNext(Base64ImageDataCodec::decode)
                 .onErrorResume(e -> {
-                    System.err.println("getFullImageError: " + e.getMessage());
-                    //todo log error
+                    logger.log(Level.SEVERE, "getFullImageError: " + e.getMessage());
                     return Mono.just(WrongImage.getWrongImage());
                 });
     }

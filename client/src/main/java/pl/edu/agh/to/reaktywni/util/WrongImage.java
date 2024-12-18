@@ -5,10 +5,14 @@ import pl.edu.agh.to.reaktywni.model.ImageState;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static pl.edu.agh.to.reaktywni.util.FilesToImagesConverter.createFromFile;
 
 public class WrongImage {
+    private static final Logger logger = Logger.getLogger(WrongImage.class.getName());
+
     private static final String path = "src/main/resources/GUI/error.png";
     private static Image image;
 
@@ -17,7 +21,7 @@ public class WrongImage {
             image = createFromFile(0, new File(path));
         }catch (IOException e) {
             //todo log error
-            System.out.println("Error while creating image from file: " + path);
+            logger.log(Level.WARNING, "Error while creating image from file: " + path);
             image = Image.getBuilder().build();
         }
     }
