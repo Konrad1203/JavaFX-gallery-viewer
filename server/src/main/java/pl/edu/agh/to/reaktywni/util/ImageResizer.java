@@ -8,11 +8,15 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.logging.Logger;
+
 import pl.edu.agh.to.reaktywni.image.ImageState;
 
 
 @Component
 public class ImageResizer implements Resizer {
+
+    private static final Logger logger = Logger.getLogger(ImageResizer.class.getName());
 
     @Override
     public Image resize(Image image, int targetWidth, int targetHeight) {
@@ -25,9 +29,10 @@ public class ImageResizer implements Resizer {
                     .size(targetWidth, targetHeight)
                     .keepAspectRatio(true)
                     .asBufferedImage();
-
             ImageIO.write(thumbnail, image.getExtensionType(), outputStream);
+
         } catch (IOException e) {
+            logger.warning("Error while resizing image: " + e.getMessage());
             setFailureImage(image);
             return image;
         }

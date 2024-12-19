@@ -7,9 +7,13 @@ import pl.edu.agh.to.reaktywni.model.Image;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.logging.Logger;
+
 
 @Component
 public class ServerClient {
+
+    private static final Logger logger = Logger.getLogger(ServerClient.class.getName());
 
     private final WebClient webClient;
 
@@ -21,7 +25,8 @@ public class ServerClient {
         return webClient.get()
             .uri("/images/{id}", id)
             .retrieve()
-            .bodyToMono(Image.class);
+            .bodyToMono(Image.class)
+            .doOnError(e -> logger.warning("getFullImageError: " + e.getMessage()));
     }
 
     public Flux<Image> sendImages(Flux<Image> images) {
@@ -31,14 +36,15 @@ public class ServerClient {
                 .body(images, Image.class)
                 .retrieve()
                 .bodyToFlux(Image.class)
-                .doOnError(e -> System.err.println("sendImagesError: " + e.getMessage()));
+                .doOnError(e -> logger.warning("sendImagesError: " + e.getMessage()));
     }
 
     public Flux<Image> getThumbnails() {
         return webClient.get()
                 .uri("/images/thumbnails")
                 .retrieve()
-                .bodyToFlux(Image.class);
+                .bodyToFlux(Image.class)
+                .doOnError(e -> logger.warning("getThumbnailsError: " + e.getMessage()));
     }
 
     public Mono<Long> getThumbnailsCount() {
@@ -46,8 +52,7 @@ public class ServerClient {
                 .uri("/images/thumbnails/count")
                 .retrieve()
                 .bodyToMono(Long.class)
-                .doOnError(e -> System.err.println("getImagesCountError: " + e.getMessage()));
-
+                .doOnError(e -> logger.warning("getThumbnailsCountError: " + e.getMessage()));
     }
 }
 

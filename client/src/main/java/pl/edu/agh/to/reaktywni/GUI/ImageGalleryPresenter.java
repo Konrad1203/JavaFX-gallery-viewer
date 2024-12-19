@@ -46,6 +46,11 @@ public class ImageGalleryPresenter {
             200, 120, false, true
     );
 
+    private static final javafx.scene.image.Image errorImage = new javafx.scene.image.Image(
+            Objects.requireNonNull(ImageGalleryPresenter.class.getResourceAsStream("/GUI/error.png")),
+            200, 120, false, true
+    );
+
     private final ImagePipeline imagePipeline;
 
     private final StageInitializer stageInitializer;
@@ -56,22 +61,30 @@ public class ImageGalleryPresenter {
     }
 
     public void initialize() {
-        try {
-            imagePipeline.setPresenter(this);
-            Long count = imagePipeline.getThumbnailsCount().block();
-            if (count == null) throw new RuntimeException("Nie udało się pobrać liczby obrazów");
-            if (count == 0) return;
-            addStartPlaceholdersToGrid(count);
-            AtomicInteger startImagesCounter = new AtomicInteger(0);
-            imagePipeline.getThumbnails()
-                    //.delayElements(Duration.ofMillis(300)) // simulate connection latency
-                    .subscribe(image -> replacePlaceholderWithImage(image, startImagesCounter.getAndIncrement()),
-                            e -> logger.log(Level.SEVERE,"Error: " + e.getMessage()),
-                            () -> logger.info("Loaded all images"));
-        } catch (Exception e) {
-            logger.log(Level.SEVERE,"Initialization failed: " + e.getMessage());
-            Platform.runLater(Platform::exit);
-        }
+        imagePipeline.setPresenter(this);
+        imagePipeline.getThumbnailsCount()
+                .subscribe(
+                        count -> {
+                            if (count == null) throw new IllegalStateException("Cannot get thumbnails count");
+                            if (count == 0) return;
+                            addStartPlaceholdersToGrid(count);
+                            AtomicInteger startImagesCounter = new AtomicInteger(0);
+                            imagePipeline.getThumbnails()
+                                    .subscribe(image -> replacePlaceholderWithImage(image, startImagesCounter.getAndIncrement()),
+                                            e -> logger.log(Level.SEVERE,"Error: " + e.getMessage()),
+                                            () -> logger.info("Loaded all images"));
+                        },
+                        error -> {
+                            logger.log(Level.SEVERE,"Error: " + error.getMessage());
+                            Platform.runLater(() -> {
+                                Alert alert = new Alert(Alert.AlertType.ERROR);
+                                alert.setTitle("Initialization error");
+                                alert.setHeaderText("Cannot receive data from the server");
+                                alert.setContentText("Check if the server is running and try again");
+                                alert.showAndWait();
+                                Platform.exit();
+                            });
+                        });
     }
 
     @FXML
@@ -91,9 +104,8 @@ public class ImageGalleryPresenter {
     @FXML
     private void sendAndReceiveImages() {
         if (files == null) return;
-        List<Image> imagesToSend;
         try {
-            imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex);
+            List<Image> imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex);
             addNamedPlaceholdersToGrid(imagesToSend);
             new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend)).start();
         } catch (IOException e) {
@@ -139,13 +151,7 @@ public class ImageGalleryPresenter {
     public void replacePlaceholderWithImage(Image image, int gridPlacementId) {
         Platform.runLater(() -> {
             ImageVBox imageVBox = imageVBoxFromGridPlacementId.remove(gridPlacementId);
-            if (image.getImageState() == ImageState.FAILURE) {
-                imageVBox.setName("Błąd: " + image.getName());;
-            }
-            imageVBox.setImage(image);
-            if (!imageVBox.isNameFilled()) {
-                imageVBox.setName(image.getName());
-            }
+            imageVBox.placeImage(image);
         });
     }
 
@@ -165,14 +171,16 @@ public class ImageGalleryPresenter {
             getChildren().addAll(imageView, nameLabel);
         }
 
-        public void setImage(Image image) {
-            imageView.setImage(new javafx.scene.image.Image(new ByteArrayInputStream(image.getData()), 200, 120, false, false));
+        public void placeImage(Image image) {
+            if (image.getImageState() != ImageState.FAILURE) {
+                if (!isNameFilled()) nameLabel.setText(image.getName());
+                imageView.setImage(new javafx.scene.image.Image(new ByteArrayInputStream(image.getData()), 200, 120, false, false));
+            } else {
+                nameLabel.setText("Error: " + image.getName());
+                imageView.setImage(errorImage);
+            }
             setOnMouseClicked(event ->
                     stageInitializer.openBigImageView(imagePipeline.getFullImage(image.getDatabaseId())));
-        }
-
-        public void setName(String name) {
-            nameLabel.setText(name);
         }
 
         public boolean isNameFilled() {

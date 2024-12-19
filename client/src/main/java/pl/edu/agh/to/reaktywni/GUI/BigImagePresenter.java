@@ -5,7 +5,6 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.springframework.stereotype.Component;
-import java.io.ByteArrayInputStream;
 import java.util.Objects;
 
 
@@ -26,12 +25,17 @@ public class BigImagePresenter {
             620, 349, true, true
     );
 
+    private static final javafx.scene.image.Image errorImage = new javafx.scene.image.Image(
+            Objects.requireNonNull(ImageGalleryPresenter.class.getResourceAsStream("/GUI/error.png")),
+            620, 349, true, true
+    );
+
     public void initialize() {
         imageView.setImage(loadingDots);
     }
 
-    public void setImage(byte[] imageData) {
-        imageView.setImage(new Image(new ByteArrayInputStream(imageData)));
+    public void setImage(Image image) {
+        imageView.setImage(image);
     }
 
     public void setName(String name) {
@@ -40,5 +44,11 @@ public class BigImagePresenter {
 
     public void setSize(int width, int height) {
         sizeLabel.setText(width + "x" + height);
+    }
+
+    public void setErrorImage(String errorMessage) {
+        nameLabel.setText("Error: " + errorMessage);
+        sizeLabel.setText("..............");
+        imageView.setImage(errorImage);
     }
 }

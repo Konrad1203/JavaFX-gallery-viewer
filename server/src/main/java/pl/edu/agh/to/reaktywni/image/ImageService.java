@@ -1,7 +1,8 @@
 package pl.edu.agh.to.reaktywni.image;
 
-import lombok.extern.java.Log;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
 import pl.edu.agh.to.reaktywni.util.Base64ImageDataCodec;
@@ -32,11 +33,10 @@ public class ImageService {
         this.imageResizer = imageResizer;
     }
 
-    public Optional<Image> getImage(int id) {
-        return imageRepository.findById(id).map(image -> {
-            Base64ImageDataCodec.encode(image);
-            return image;
-        });
+    public Mono<Image> getImage(int id) {
+        return Mono.justOrEmpty(imageRepository.findById(id))
+                .doOnNext(Base64ImageDataCodec::encode)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found")));
     }
 
     public Flux<Image> getThumbnails() {
@@ -47,8 +47,9 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
-    public long getThumbnailsCount() {
-        return thumbnailRepository.count();
+    public Mono<Long> getThumbnailsCount() {
+        return Mono.justOrEmpty(thumbnailRepository.count())
+                .switchIfEmpty(Mono.error(new IllegalStateException("Cannot get thumbnails count")));
     }
 
     public long getImagesCount() {
