@@ -17,15 +17,13 @@ import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.Iterator;
-import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@SpringBootTest(classes = ReaktywniClientApp.class)
 @ActiveProfiles("test")
 class ReaktywniClientAppTests {
 

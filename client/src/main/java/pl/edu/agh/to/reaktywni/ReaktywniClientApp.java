@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Profile;
 
 
 @SpringBootApplication
-@Profile("!test") // used because javafx wasn't "friendly" during tests :(
+@Profile({"dev", "prod"})
 public class ReaktywniClientApp {
 
 	public static void main(String[] args) {
