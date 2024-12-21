@@ -43,7 +43,7 @@ public class ImageGalleryPresenter {
     private List<File> files;
     private int gridIndex = 0;
     private ThumbnailSize thumbnailsSize;
-    private final Map<Integer, ImageVBox> imageVBoxFromGridId = new HashMap<>();
+    private final List<ImageVBox> imageVBoxFromGridId = new ArrayList<>();
     private final Map<Integer, ImageVBox> imageVBoxFromDBId = new HashMap<>();
 
     private final ImagePipeline imagePipeline;
@@ -64,7 +64,7 @@ public class ImageGalleryPresenter {
                             if (count == 0) return;
                             addStartPlaceholdersToGrid(count);
                             AtomicInteger startImagesCounter = new AtomicInteger(0);
-                            imagePipeline.getThumbnails()
+                            imagePipeline.getThumbnails(thumbnailsSize.toString())
                                     .subscribe(image -> Platform.runLater(() -> replacePlaceholderWithImage(image, startImagesCounter.getAndIncrement())),
                                             e -> logger.log(Level.SEVERE,"Error: " + e.getMessage()),
                                             () -> logger.info("Loaded all images"));
@@ -128,21 +128,19 @@ public class ImageGalleryPresenter {
     }
 
     private void updateImageVBoxesSize() {
-        for (ImageVBox imageVBox : imageVBoxFromGridId.values()) {
+        for (ImageVBox imageVBox : imageVBoxFromGridId) {
             imageVBox.changeVBoxSize(thumbnailsSize);
         }
     }
 
     private void placeVBoxesToGrid() {
-        for (int index : imageVBoxFromGridId.keySet()) {
+        for (int index = 0; index < imageVBoxFromGridId.size(); index++) {
             gridPane.add(imageVBoxFromGridId.get(index), index % gridPane.getColumnCount(), index / gridPane.getColumnCount());
         }
     }
 
     private void downloadThumbnails() {
-        // TODO: Implement downloading thumbnails with correct size
-
-        imagePipeline.getThumbnails()   // imagePipeline.getThumbnails(thumbnailsSize)
+        imagePipeline.getThumbnails(thumbnailsSize.toString())
                 .subscribe(image -> {
                     ImageVBox imageVBox = imageVBoxFromDBId.get(image.getDatabaseId());
                     if (imageVBox != null) imageVBox.placeImage(thumbnailsSize, image);
@@ -185,7 +183,7 @@ public class ImageGalleryPresenter {
         for (int i = 0; i < count; i++) {
             ImageVBox imageVBox = new ImageVBox(thumbnailsSize, "............");
             final int index = gridIndex++;
-            imageVBoxFromGridId.put(index, imageVBox);
+            imageVBoxFromGridId.add(imageVBox);
             Platform.runLater(() -> gridPane.add(imageVBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
         }
     }
@@ -194,7 +192,7 @@ public class ImageGalleryPresenter {
         for (Image image : images) {
             ImageVBox imageVBox = new ImageVBox(thumbnailsSize, image.getName());
             final int index = gridIndex++;
-            imageVBoxFromGridId.put(image.getGridPlacementId(), imageVBox);
+            imageVBoxFromGridId.add(imageVBox);
             Platform.runLater(() -> gridPane.add(imageVBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
         }
     }

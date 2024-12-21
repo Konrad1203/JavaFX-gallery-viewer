@@ -37,7 +37,8 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
-    public Flux<Image> getThumbnails() {
+    public Flux<Image> getThumbnails(String size) {
+        // TODO Implement searching for thumbnails of a given size
         return Flux.fromIterable(thumbnailRepository.findAll())
                 .map(this::createImageFromThumbnail)
                 .filter(Optional::isPresent)

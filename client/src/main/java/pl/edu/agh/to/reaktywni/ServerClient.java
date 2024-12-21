@@ -39,9 +39,11 @@ public class ServerClient {
                 .doOnError(e -> logger.warning("sendImagesError: " + e.getMessage()));
     }
 
-    public Flux<Image> getThumbnails() {
+    public Flux<Image> getThumbnails(String thumbnailSize) {
         return webClient.get()
-                .uri("/images/thumbnails")
+                .uri(uriBuilder -> uriBuilder.path("/images/thumbnails")
+                        .queryParam("size", thumbnailSize)
+                        .build())
                 .retrieve()
                 .bodyToFlux(Image.class)
                 .doOnError(e -> logger.warning("getThumbnailsError: " + e.getMessage()));

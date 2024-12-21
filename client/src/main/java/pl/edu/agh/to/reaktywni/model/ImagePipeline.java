@@ -30,8 +30,8 @@ public class ImagePipeline {
         return receivedImages.doOnNext(Base64ImageDataCodec::decode);
     }
 
-    public Flux<Image> getThumbnails() {
-        return serverClient.getThumbnails()
+    public Flux<Image> getThumbnails(String thumbnailSize) {
+        return serverClient.getThumbnails(thumbnailSize)
                 .doOnNext(Base64ImageDataCodec::decode)
                 .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsError: " + e.getMessage()));
 

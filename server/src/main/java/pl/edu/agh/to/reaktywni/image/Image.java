@@ -21,6 +21,7 @@ public class Image {
 
     @Setter
     @Transient
+    @Builder.Default
     private ImageState imageState = ImageState.PENDING;
 
     @Setter

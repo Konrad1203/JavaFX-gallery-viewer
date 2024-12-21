@@ -96,7 +96,7 @@ public class ImageServiceTest {
         Image image = getTestImage(500, 300, 100);
         imageRepository.save(image);
 
-        Flux<Image> thumbnails = imageService.getThumbnails();
+        Flux<Image> thumbnails = imageService.getThumbnails("MEDIUM");
 
         StepVerifier.create(thumbnails)
                 .expectNextMatches(t -> {
