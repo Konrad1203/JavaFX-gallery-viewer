@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Optional;
 
 import reactor.test.StepVerifier;
 
@@ -88,7 +89,8 @@ public class ImageServiceTest {
 
     @Test
     public void testGetThumbnails() {
-        Thumbnail thumbnail = new Thumbnail(1, 320, 180, new byte[50]);
+        Thumbnail thumbnail = new Thumbnail(1, 1, 320, 180);
+        thumbnail.setData(new byte[50]);
         thumbnailRepository.save(thumbnail);
 
         Image image = getTestImage(500, 300, 100);
@@ -106,17 +108,23 @@ public class ImageServiceTest {
     }
 
     @Test
-    public void getImagesCountTest() {
+    public void getThumbnailsCountTest() {
         Image image1 = getTestImage(500, 300, 100);
+        image1.setImageState(ImageState.SUCCESS);
         Image image2 = getTestImage(500, 300, 100);
+        image2.setImageState(ImageState.SUCCESS);
         Image image3 = getTestImage(500, 300, 100);
+        image3.setImageState(ImageState.SUCCESS);
 
-        imageRepository.save(image1);
-        imageRepository.save(image2);
-        imageRepository.save(image3);
+        imageService.createAndSaveThumbnail(image1);
+        imageService.createAndSaveThumbnail(image2);
+        imageService.createAndSaveThumbnail(image3);
 
-        long count = imageService.getImagesCount();
+        Optional<Long> count = imageService.getThumbnailsCount().blockOptional();
+        if (count.isEmpty()) {
+            fail("Count is empty");
+        }
 
-        assertEquals(3L, count);
+        assertEquals(3L, count.get());
     }
 }

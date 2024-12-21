@@ -1,8 +1,6 @@
 package pl.edu.agh.to.reaktywni.model;
 
-import lombok.Setter;
 import org.springframework.stereotype.Component;
-import pl.edu.agh.to.reaktywni.GUI.ImageGalleryPresenter;
 import pl.edu.agh.to.reaktywni.ServerClient;
 import pl.edu.agh.to.reaktywni.util.Base64ImageDataCodec;
 import reactor.core.publisher.Flux;
@@ -19,23 +17,17 @@ public class ImagePipeline {
 
     private final ServerClient serverClient;
 
-    @Setter
-    private ImageGalleryPresenter presenter;
-
     public ImagePipeline(ServerClient serverClient) {
         this.serverClient = serverClient;
     }
 
-    public void sendAndReceiveImages(List<Image> images) {
+    public Flux<Image> sendAndReceiveImages(List<Image> images) {
         logger.info("Sending images: " + images.size());
 
         Flux<Image> receivedImages = serverClient.sendImages(Flux.fromIterable(images)
                 .doOnNext(Base64ImageDataCodec::encode));
 
-        receivedImages
-                .doOnNext(Base64ImageDataCodec::decode)
-                .doOnNext(image -> presenter.replacePlaceholderWithImage(image, image.getGridPlacementId()))
-                .blockLast();
+        return receivedImages.doOnNext(Base64ImageDataCodec::decode);
     }
 
     public Flux<Image> getThumbnails() {

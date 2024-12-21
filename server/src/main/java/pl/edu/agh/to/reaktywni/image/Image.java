@@ -21,7 +21,7 @@ public class Image {
 
     @Setter
     @Transient
-    private ImageState imageState;
+    private ImageState imageState = ImageState.PENDING;
 
     @Setter
     private String name;

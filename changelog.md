@@ -98,3 +98,29 @@ Technologies
 <p align="center">
     <img src="md-images/diagram3.png" alt="class diagram 3">
 </p>
+
+
+## 3.01.2025 - Second Milestone
+
+### Client
+- Changed UI language to english
+- Added thumbnails size slider with 3 sizes
+- sendAndReceiveImages() method in ImagePipeline now returns Flux<Images> rather than using presenter
+- ImageGalleryPresenter:
+    - Added private class ThumbnailSize
+    - Added attribute to store current thumbnail size
+    - Added logic to handle slider value change
+
+### Server
+- Added new ImageState: PENDING
+- Set new Image imageStatus to PENDING
+- Thumbnail changes:
+    - Added new attributes: (size) type and ImageState state 
+    - Changed constructor to include type and exclude data 
+    - Added new methods: setData() and setFailure()
+- Minor fixes:
+    - Removed unused getImagesCount() from ImageController and ImageService 
+    - Moved switchIfEmpty statements from ImageService to ImageController
+- Tests:
+    - Fixed testGetThumbnails() to use new Thumbnail constructor
+    - Replaced getImagesCountTest() with getThumbnailsCountTest()

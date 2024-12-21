@@ -1,8 +1,7 @@
 package pl.edu.agh.to.reaktywni.image;
 
-import org.springframework.http.HttpStatus;
+
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
 import pl.edu.agh.to.reaktywni.util.Base64ImageDataCodec;
@@ -35,8 +34,7 @@ public class ImageService {
 
     public Mono<Image> getImage(int id) {
         return Mono.justOrEmpty(imageRepository.findById(id))
-                .doOnNext(Base64ImageDataCodec::encode)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found")));
+                .doOnNext(Base64ImageDataCodec::encode);
     }
 
     public Flux<Image> getThumbnails() {
@@ -48,12 +46,8 @@ public class ImageService {
     }
 
     public Mono<Long> getThumbnailsCount() {
-        return Mono.justOrEmpty(thumbnailRepository.count())
-                .switchIfEmpty(Mono.error(new IllegalStateException("Cannot get thumbnails count")));
-    }
+        return Mono.justOrEmpty(thumbnailRepository.count());
 
-    public long getImagesCount() {
-        return imageRepository.count();
     }
 
     public Flux<Image> processImages(Flux<Image> images) {
@@ -87,7 +81,8 @@ public class ImageService {
 
     public void createAndSaveThumbnail(Image image) {
         if (image.getImageState().equals(ImageState.SUCCESS)) {
-            Thumbnail thumbnail = new Thumbnail(image.getDatabaseId(), THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, image.getData());
+            Thumbnail thumbnail = new Thumbnail(image.getDatabaseId(), 1, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
+            thumbnail.setData(image.getData());
             thumbnailRepository.save(thumbnail);
         }
     }
