@@ -12,4 +12,7 @@ public interface ThumbnailRepository extends JpaRepository<Thumbnail, Integer> {
     List<Thumbnail> getThumbnailsBySize(ThumbnailSize size);
 
     Long countBySize(ThumbnailSize size);
+
+
+    Thumbnail findByImageIdAndSize(int databaseId, ThumbnailSize thumbnailSize);
 }

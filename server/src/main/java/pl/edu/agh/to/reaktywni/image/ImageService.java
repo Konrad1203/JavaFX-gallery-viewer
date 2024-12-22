@@ -60,12 +60,21 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::decode)
                 .doOnNext(this::logImageData)
                 .map(imageRepository::save)
+                .doOnNext(this::savePlaceholderThumbnails)
                 .doOnNext(image -> Mono.fromRunnable(() -> generateAndSaveOtherThumbnails(image, ThumbnailSize.valueOf(size)))
                         .subscribeOn(Schedulers.boundedElastic())
                         .subscribe())
                 .flatMap(image -> processThumbnailAndReturnImage(image, ThumbnailSize.valueOf(size)))
                 .doOnNext(this::logThumbnailData)
                 .doOnNext(Base64ImageDataCodec::encode);
+    }
+
+    private void savePlaceholderThumbnails(Image image) {
+        Arrays.stream(ThumbnailSize.values())
+                .forEach(size -> {
+                    Thumbnail placeholder = new Thumbnail(image.getDatabaseId(), size);
+                    thumbnailRepository.save(placeholder);
+                });
     }
 
     private void logImageData(Image image) {
@@ -96,8 +105,22 @@ public class ImageService {
     private Mono<Thumbnail> generateAndSaveThumbnail(Image image, ThumbnailSize thumbnailSize) {
         return Mono.fromCallable(() -> imageResizer.createThumbnail(image, thumbnailSize))
                 .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(thumbnail -> Mono.fromCallable(() -> {
+                    Thumbnail placeholder = thumbnailRepository.findByImageIdAndSize(image.getDatabaseId(), thumbnailSize);
+                    placeholder.setData(thumbnail.getData());
+                    placeholder.setState(ImageState.PENDING);
+                    thumbnailRepository.save(placeholder);
+                    return placeholder;
+                }).subscribeOn(Schedulers.boundedElastic()))
                 .doOnNext(this::logThumbnailData)
-                .doOnNext(thumbnailRepository::save);
+                .doOnError(error -> {
+                    Mono.fromCallable(() -> {
+                        Thumbnail placeholder = thumbnailRepository.findByImageIdAndSize(image.getDatabaseId(), thumbnailSize);
+                        placeholder.setFailure();
+                        thumbnailRepository.save(placeholder);
+                        return placeholder;
+                    }).subscribeOn(Schedulers.boundedElastic()).subscribe();
+                });
     }
 
 
