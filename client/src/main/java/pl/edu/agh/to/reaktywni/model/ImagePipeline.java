@@ -21,13 +21,17 @@ public class ImagePipeline {
         this.serverClient = serverClient;
     }
 
-    public Flux<Image> sendAndReceiveImages(List<Image> images) {
+    public Flux<Image> sendAndReceiveImages(List<Image> images, String thumbnailSize) {
         logger.info("Sending images: " + images.size());
 
-        Flux<Image> receivedImages = serverClient.sendImages(Flux.fromIterable(images)
-                .doOnNext(Base64ImageDataCodec::encode));
+        Flux<Image> receivedImages = serverClient.sendImages(
+                Flux.fromIterable(images).doOnNext(Base64ImageDataCodec::encode),
+                thumbnailSize
+        );
 
-        return receivedImages.doOnNext(Base64ImageDataCodec::decode);
+        return receivedImages.doOnNext(Base64ImageDataCodec::decode)
+                .doOnNext(image -> logger.info("Received image: " + image.getName() +
+                        " | Size: " + image.getWidth() + "x" + image.getHeight() + " | State: " + image.getImageState()));
     }
 
     public Flux<Image> getThumbnails(String thumbnailSize) {
@@ -37,8 +41,8 @@ public class ImagePipeline {
 
     }
 
-    public Mono<Long> getThumbnailsCount() {
-        return serverClient.getThumbnailsCount();
+    public Mono<Long> getThumbnailsCount(String thumbnailSize) {
+        return serverClient.getThumbnailsCount(thumbnailSize);
     }
 
     public Mono<Image> getFullImage(int id) {

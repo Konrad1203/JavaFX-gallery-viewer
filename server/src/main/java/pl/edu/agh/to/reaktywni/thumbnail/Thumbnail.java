@@ -14,11 +14,7 @@ public class Thumbnail {
 
     private int imageId;
 
-    private int type; // size {small, medium, large}
-
-    private int width;
-
-    private int height;
+    private ThumbnailSize size;
 
     @Lob private byte[] data;
 
@@ -26,11 +22,9 @@ public class Thumbnail {
 
     public Thumbnail() {}
 
-    public Thumbnail(int imageId, int type, int width, int height) {
+    public Thumbnail(int imageId, ThumbnailSize size) {
         this.imageId = imageId;
-        this.type = type;
-        this.width = width;
-        this.height = height;
+        this.size = size;
     }
 
     public void setData(byte[] data) {

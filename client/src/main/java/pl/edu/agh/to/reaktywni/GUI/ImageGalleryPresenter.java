@@ -57,7 +57,7 @@ public class ImageGalleryPresenter {
     public void initialize() {
         thumbnailsSize = ThumbnailSize.getFromId((int) sizeSlider.getValue());
         initializeSizeSlider();
-        imagePipeline.getThumbnailsCount()
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
                 .subscribe(
                         count -> {
                             if (count == null) throw new IllegalStateException("Cannot get thumbnails count");
@@ -167,7 +167,7 @@ public class ImageGalleryPresenter {
         try {
             List<Image> imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex);
             addNamedPlaceholdersToGrid(imagesToSend);
-            new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend)
+            new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend, thumbnailsSize.toString())
                     .doOnNext(image -> Platform.runLater(() -> replacePlaceholderWithImage(image, image.getGridPlacementId())))
                     .blockLast()).start();
         } catch (IOException e) {

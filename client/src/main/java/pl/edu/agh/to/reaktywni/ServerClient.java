@@ -29,9 +29,9 @@ public class ServerClient {
             .doOnError(e -> logger.warning("getFullImageError: " + e.getMessage()));
     }
 
-    public Flux<Image> sendImages(Flux<Image> images) {
+    public Flux<Image> sendImages(Flux<Image> images, String thumbnailSize) {
         return webClient.post()
-                .uri("/images")
+                .uri("/images?size={size}", thumbnailSize)
                 .contentType(MediaType.APPLICATION_NDJSON)
                 .body(images, Image.class)
                 .retrieve()
@@ -41,17 +41,15 @@ public class ServerClient {
 
     public Flux<Image> getThumbnails(String thumbnailSize) {
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/images/thumbnails")
-                        .queryParam("size", thumbnailSize)
-                        .build())
+                .uri("/thumbnails?size={size}", thumbnailSize)
                 .retrieve()
                 .bodyToFlux(Image.class)
                 .doOnError(e -> logger.warning("getThumbnailsError: " + e.getMessage()));
     }
 
-    public Mono<Long> getThumbnailsCount() {
+    public Mono<Long> getThumbnailsCount(String thumbnailSize) {
         return webClient.get()
-                .uri("/images/thumbnails/count")
+                .uri("/thumbnails/count?size={size}", thumbnailSize)
                 .retrieve()
                 .bodyToMono(Long.class)
                 .doOnError(e -> logger.warning("getThumbnailsCountError: " + e.getMessage()));
