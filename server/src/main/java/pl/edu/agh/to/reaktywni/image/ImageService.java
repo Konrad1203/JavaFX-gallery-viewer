@@ -74,14 +74,14 @@ public class ImageService {
     private void saveEmptyThumbnails(Image image) {
         thumbnailRepository.saveAll(
                 Arrays.stream(ThumbnailSize.values())
-                        .map(size -> new Thumbnail(image.getDatabaseId(), size))
+                        .map(size -> new Thumbnail(image, size))
                         .toList()
         );
     }
 
     private Mono<Image> processThumbnailAndReturnImage(Image image, ThumbnailSize thumbnailSize) {
         return generateAndUpdateThumbnail(image, thumbnailSize)
-                .map(thumbnail -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), image.getGridPlacementId()));
+                .map(thumbnail -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), image.getGridId()));
     }
 
     private void generateAndSaveOtherThumbnails(Image image, ThumbnailSize thumbnailSize) {
@@ -101,7 +101,7 @@ public class ImageService {
 
     private Mono<Thumbnail> updateEmptyThumbnail(Thumbnail readyThumbnail, Image image, ThumbnailSize thumbnailSize) {
         return Mono.fromCallable(() -> {
-            Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getDatabaseId(), thumbnailSize);
+            Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getId(), thumbnailSize);
             if (readyThumbnail.getState().equals(ImageState.SUCCESS)) {
                 emptyThumbnail.setData(readyThumbnail.getData());
             } else {
@@ -114,9 +114,8 @@ public class ImageService {
     }
 
     private Mono<Thumbnail> updateEmptyThumbnailOnError(Image image, ThumbnailSize thumbnailSize) {
-        // Czy to się w ogóle kiedyś wykona? Przecież w resizowaniu nie rzucamy błędu
         return Mono.fromCallable(() -> {
-            Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getDatabaseId(), thumbnailSize);
+            Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getId(), thumbnailSize);
             emptyThumbnail.setFailure();
             thumbnailRepository.save(emptyThumbnail);
             return emptyThumbnail;
@@ -125,14 +124,14 @@ public class ImageService {
 
 
     private Optional<Image> createImageFromThumbnail(Thumbnail thumbnail) {
-        return imageRepository.findByDatabaseId(thumbnail.getImageId())
-                .map(image -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), -1));
+        return imageRepository.findImageMetaDataById(thumbnail.getImageId())
+                .map(image -> createImageFromThumbnail(thumbnail, image.name(), image.extensionType(), -1));
     }
 
     public void reprocessPendingThumbnails() {
         Flux.fromIterable(thumbnailRepository.findByState(ImageState.PENDING))
                 .doOnNext(this::logReprocessing)
-                .flatMap(thumbnail -> Mono.fromCallable(() -> imageRepository.findImageByDatabaseId(thumbnail.getImageId()))
+                .flatMap(thumbnail -> Mono.fromCallable(thumbnail::getImage)
                         .subscribeOn(Schedulers.boundedElastic())
                         .flatMap(Mono::justOrEmpty)
                         .flatMap(image -> generateAndUpdateThumbnail(image, thumbnail.getSize()))
@@ -143,8 +142,8 @@ public class ImageService {
 
     private Image createImageFromThumbnail(Thumbnail thumbnail, String imageName, String extensionType, int gridId) {
         return Image.builder()
-                .databaseId(thumbnail.getImageId())
-                .gridPlacementId(gridId)
+                .id(thumbnail.getImageId())
+                .gridId(gridId)
                 .imageState(thumbnail.getState())
                 .name(imageName)
                 .extensionType(extensionType)
@@ -167,7 +166,7 @@ public class ImageService {
     }
 
     private void logProcessedData(Image image) {
-        logger.log(Level.INFO, "To be sent: ImageId: " + image.getDatabaseId() + ", " + image.getGridPlacementId() +
+        logger.log(Level.INFO, "To be sent: ImageId: " + image.getId() + ", " + image.getGridId() +
                 " | Size: " + image.getWidth() + "x" + image.getHeight() + " | Status: " + image.getImageState());
     }
 }

@@ -16,7 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
-import java.util.Optional;
 
 import reactor.test.StepVerifier;
 
@@ -40,7 +39,7 @@ public class ImageServiceTest {
 
     private static Image getTestImage(int width, int height, int size) {
         return Image.builder()
-                .gridPlacementId(1)
+                .gridId(1)
                 .name("test-image")
                 .extensionType("jpg")
                 .width(width)
@@ -90,7 +89,9 @@ public class ImageServiceTest {
 
     @Test
     public void testGetThumbnails() {
-        Thumbnail thumbnail = new Thumbnail(1, ThumbnailSize.MEDIUM);
+        Image img = new Image();
+        img.setId(1);
+        Thumbnail thumbnail = new Thumbnail(img, ThumbnailSize.MEDIUM);
         thumbnail.setData(new byte[50]);
         thumbnailRepository.save(thumbnail);
 

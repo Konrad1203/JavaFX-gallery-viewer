@@ -16,10 +16,10 @@ public class Image {
     @Setter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int databaseId;
+    private int id;
 
     @Transient
-    private int gridPlacementId;
+    private int gridId;
 
     @Setter
     @Transient
@@ -45,8 +45,8 @@ public class Image {
     @Override
     public String toString() {
         return "Image{" +
-                "databaseId=" + databaseId +
-                ", gridPlacementId=" + gridPlacementId +
+                "id=" + id +
+                ", gridId=" + gridId +
                 ", imageState=" + imageState +
                 ", name='" + name + '\'' +
                 ", extensionType='" + extensionType + '\'' +

@@ -9,9 +9,9 @@ import lombok.Setter;
 @Builder
 public class Image {
 
-    private int databaseId;
+    private int id;
 
-    private final int gridPlacementId;
+    private final int gridId;
 
     private ImageState imageState;
 

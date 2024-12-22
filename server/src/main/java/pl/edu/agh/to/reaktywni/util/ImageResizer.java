@@ -23,7 +23,7 @@ public class ImageResizer implements Resizer {
     public Thumbnail createThumbnail(Image image, ThumbnailSize size) {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(image.getData());
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        Thumbnail thumbnail = new Thumbnail(image.getDatabaseId(), size);
+        Thumbnail thumbnail = new Thumbnail(image, size);
 
         try {
             BufferedImage originalImage = ImageIO.read(inputStream);

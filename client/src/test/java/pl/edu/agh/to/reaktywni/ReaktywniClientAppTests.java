@@ -46,7 +46,7 @@ class ReaktywniClientAppTests {
 		String extensionType = getFileExtension(file.getName());
 		int[] size = getImageDimensions(file, extensionType);
 		return Image.builder()
-				.gridPlacementId(id)
+				.gridId(id)
 				.name(file.getName())
 				.extensionType(extensionType)
 				.width(size[0])

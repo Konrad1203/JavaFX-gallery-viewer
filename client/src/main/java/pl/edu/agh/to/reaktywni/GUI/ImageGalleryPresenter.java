@@ -13,7 +13,6 @@ import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
-import lombok.Getter;
 import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -143,7 +142,7 @@ public class ImageGalleryPresenter {
         imagePipeline.getThumbnails(thumbnailsSize.toString())
                 .subscribe(
                         image -> {
-                            ImageVBox imageVBox = imageVBoxFromDBId.get(image.getDatabaseId());
+                            ImageVBox imageVBox = imageVBoxFromDBId.get(image.getId());
                             if (imageVBox != null) imageVBox.placeImage(thumbnailsSize, image);
                         },
                         error -> Platform.runLater(() -> {
@@ -176,7 +175,7 @@ public class ImageGalleryPresenter {
             List<Image> imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex);
             addNamedPlaceholdersToGrid(imagesToSend);
             new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend, thumbnailsSize.toString())
-                    .doOnNext(image -> Platform.runLater(() -> replacePlaceholderWithImage(image, image.getGridPlacementId())))
+                    .doOnNext(image -> Platform.runLater(() -> replacePlaceholderWithImage(image, image.getGridId())))
                     .doOnError(e -> Platform.runLater(() -> handleServerError(e)))
                     .blockLast()
             ).start();
@@ -216,9 +215,9 @@ public class ImageGalleryPresenter {
         }
     }
 
-    private void replacePlaceholderWithImage(Image image, int gridPlacementId) {
-        ImageVBox imageVBox = imageVBoxFromGridId.get(gridPlacementId);
-        imageVBoxFromDBId.put(image.getDatabaseId(), imageVBox);
+    private void replacePlaceholderWithImage(Image image, int gridId) {
+        ImageVBox imageVBox = imageVBoxFromGridId.get(gridId);
+        imageVBoxFromDBId.put(image.getId(), imageVBox);
         imageVBox.placeImage(thumbnailsSize, image);
     }
 
@@ -263,9 +262,6 @@ public class ImageGalleryPresenter {
 
         private final Label nameLabel = new Label();
 
-        @Getter
-        private int imageDBId = -1;
-
         public ImageVBox(ThumbnailSize size, String name) {
             imageView.setImage(size.placeholder);
             nameLabel.setText(name);
@@ -277,7 +273,6 @@ public class ImageGalleryPresenter {
         }
 
         public void placeImage(ThumbnailSize size, Image image) {
-            imageDBId = image.getDatabaseId();
             if (image.getImageState() == ImageState.SUCCESS) {
                 if (!isNameFilled()) nameLabel.setText(image.getName());
                 imageView.setImage(new javafx.scene.image.Image(new ByteArrayInputStream(image.getData()), size.imageWidth, size.imageHeight, false, false));
@@ -286,7 +281,7 @@ public class ImageGalleryPresenter {
                 imageView.setImage(size.errorImage);
             }
             setOnMouseClicked(event ->
-                    stageInitializer.openBigImageView(imagePipeline.getFullImage(image.getDatabaseId())));
+                    stageInitializer.openBigImageView(imagePipeline.getFullImage(image.getId())));
         }
 
         public boolean isNameFilled() {

@@ -1,6 +1,7 @@
 package pl.edu.agh.to.reaktywni.thumbnail;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import pl.edu.agh.to.reaktywni.image.ImageState;
 
@@ -14,7 +15,8 @@ public interface ThumbnailRepository extends JpaRepository<Thumbnail, Integer> {
 
     Long countBySize(ThumbnailSize size);
 
-    Thumbnail findByImageIdAndSize(int databaseId, ThumbnailSize thumbnailSize);
+    @Query("SELECT t FROM Thumbnail t WHERE t.image.id = :id AND t.size = :size")
+    Thumbnail findByImageIdAndSize(int id, ThumbnailSize size);
 
     Iterable<Thumbnail> findByState(ImageState imageState);
 }

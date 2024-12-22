@@ -3,6 +3,7 @@ package pl.edu.agh.to.reaktywni.thumbnail;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import pl.edu.agh.to.reaktywni.image.Image;
 import pl.edu.agh.to.reaktywni.image.ImageState;
 
 
@@ -13,7 +14,8 @@ public class Thumbnail {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    private int imageId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Image image;
 
     private ThumbnailSize size;
 
@@ -25,11 +27,15 @@ public class Thumbnail {
 
     public Thumbnail() {}
 
-    public Thumbnail(int imageId, ThumbnailSize size) {
-        this.imageId = imageId;
+    public Thumbnail(Image image, ThumbnailSize size) {
+        this.image = image;
         this.size = size;
         this.data = new byte[0];
         this.state = ImageState.PENDING;
+    }
+
+    public int getImageId() {
+        return image.getId();
     }
 
     public void setData(byte[] data) {
@@ -41,7 +47,7 @@ public class Thumbnail {
     public String toString() {
         return "Thumbnail{" +
                 "id=" + id +
-                ", imageId=" + imageId +
+                ", imageId=" + getImageId() +
                 ", size=" + size +
                 ", data=" + getPrintingData() +
                 ", state=" + state +
