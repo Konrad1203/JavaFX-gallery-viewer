@@ -40,9 +40,7 @@ public class ImagePipeline {
 
     public Flux<Image> getThumbnails(String thumbnailSize) {
         return serverClient.getThumbnails(thumbnailSize)
-                .doOnNext(Base64ImageDataCodec::decode)
-                .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsError: " + e.getMessage()));
-
+                .doOnNext(Base64ImageDataCodec::decode);
     }
 
     public Mono<Long> getThumbnailsCount(String thumbnailSize) {

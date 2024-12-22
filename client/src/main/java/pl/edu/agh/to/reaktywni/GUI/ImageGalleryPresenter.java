@@ -142,10 +142,18 @@ public class ImageGalleryPresenter {
 
     private void downloadThumbnails() {
         imagePipeline.getThumbnails(thumbnailsSize.toString())
-                .subscribe(image -> {
-                    ImageVBox imageVBox = imageVBoxFromDBId.get(image.getDatabaseId());
-                    if (imageVBox != null) imageVBox.placeImage(thumbnailsSize, image);
-                });
+                .subscribe(
+                        image -> {
+                            ImageVBox imageVBox = imageVBoxFromDBId.get(image.getDatabaseId());
+                            if (imageVBox != null) imageVBox.placeImage(thumbnailsSize, image);
+                        },
+                        error -> Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Thumbnail download error");
+                            alert.setHeaderText("Cannot receive data from the server");
+                            alert.setContentText("Check if the server is running and try again");
+                            alert.showAndWait();
+                        }));
     }
 
     @FXML

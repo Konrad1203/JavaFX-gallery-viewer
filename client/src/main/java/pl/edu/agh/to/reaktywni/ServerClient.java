@@ -7,6 +7,7 @@ import pl.edu.agh.to.reaktywni.model.Image;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -43,7 +44,7 @@ public class ServerClient {
                 .uri("/thumbnails?size={size}", thumbnailSize)
                 .retrieve()
                 .bodyToFlux(Image.class)
-                .doOnError(e -> logger.warning("getThumbnailsError: " + e.getMessage()));
+                .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsError: " + e.getMessage()));
     }
 
     public Mono<Long> getThumbnailsCount(String thumbnailSize) {
