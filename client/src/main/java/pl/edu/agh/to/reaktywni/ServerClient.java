@@ -35,8 +35,7 @@ public class ServerClient {
                 .contentType(MediaType.APPLICATION_NDJSON)
                 .body(images, Image.class)
                 .retrieve()
-                .bodyToFlux(Image.class)
-                .doOnError(e -> logger.warning("sendImagesError: " + e.getMessage()));
+                .bodyToFlux(Image.class);
     }
 
     public Flux<Image> getThumbnails(String thumbnailSize) {

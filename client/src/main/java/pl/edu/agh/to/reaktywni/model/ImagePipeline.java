@@ -30,8 +30,12 @@ public class ImagePipeline {
         );
 
         return receivedImages.doOnNext(Base64ImageDataCodec::decode)
-                .doOnNext(image -> logger.info("Received image: " + image.getName() +
-                        " | Size: " + image.getWidth() + "x" + image.getHeight() + " | State: " + image.getImageState()));
+                .doOnNext(this::logImageInfo);
+    }
+
+    private void logImageInfo(Image image) {
+        logger.info("Received image: " + image.getName() +
+                " | Size: " + image.getWidth() + "x" + image.getHeight() + " | State: " + image.getImageState());
     }
 
     public Flux<Image> getThumbnails(String thumbnailSize) {

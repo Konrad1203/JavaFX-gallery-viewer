@@ -12,7 +12,6 @@ public class Image {
     private int databaseId;
 
     private final int gridPlacementId;
-
     private ImageState imageState;
 
     private String name;

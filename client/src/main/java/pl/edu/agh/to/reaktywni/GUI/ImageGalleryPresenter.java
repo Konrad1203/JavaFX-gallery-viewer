@@ -27,6 +27,7 @@ import pl.edu.agh.to.reaktywni.util.FilesToImagesConverter;
 import pl.edu.agh.to.reaktywni.model.Image;
 import pl.edu.agh.to.reaktywni.model.ImagePipeline;
 import pl.edu.agh.to.reaktywni.model.ImageState;
+import reactor.core.publisher.Flux;
 
 
 @Component
@@ -169,13 +170,24 @@ public class ImageGalleryPresenter {
             addNamedPlaceholdersToGrid(imagesToSend);
             new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend, thumbnailsSize.toString())
                     .doOnNext(image -> Platform.runLater(() -> replacePlaceholderWithImage(image, image.getGridPlacementId())))
-                    .blockLast()).start();
+                    .doOnError(e -> Platform.runLater(() -> handleServerError(e)))
+                    .blockLast()
+            ).start();
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Image processing error");
             alert.setHeaderText("Failed to process images from files");
             alert.setContentText("Check if the selected files are images");
             alert.showAndWait();
+        }
+    }
+
+    private void handleServerError(Throwable e) {
+        logger.log(Level.SEVERE, "Error: " + e.getMessage());
+        for (ImageVBox imageVBox : imageVBoxFromGridId) {
+            if (imageVBox.imageView.getImage().equals(thumbnailsSize.placeholder)) {
+                imageVBox.imageView.setImage(thumbnailsSize.errorImage);
+            }
         }
     }
 
