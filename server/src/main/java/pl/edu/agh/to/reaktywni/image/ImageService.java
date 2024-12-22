@@ -1,6 +1,7 @@
 package pl.edu.agh.to.reaktywni.image;
 
 
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
@@ -21,6 +22,7 @@ import java.util.logging.Level;
 public class ImageService {
 
     private final static Logger logger = Logger.getLogger(ImageService.class.getName());
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(ImageService.class);
 
     private final ImageRepository imageRepository;
     private final ThumbnailRepository thumbnailRepository;
@@ -82,7 +84,7 @@ public class ImageService {
     }
 
     private void logThumbnailData(Image image) {
-        logger.log(Level.INFO, "To be sended: ImageId: " + image.getDatabaseId() + ", " + image.getGridPlacementId() +
+        logger.log(Level.INFO, "To be sent: ImageId: " + image.getDatabaseId() + ", " + image.getGridPlacementId() +
                 " | Size: " + image.getWidth() + "x" + image.getHeight() + " | Status: " + image.getImageState());
     }
 
@@ -107,8 +109,13 @@ public class ImageService {
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(thumbnail -> Mono.fromCallable(() -> {
                     Thumbnail placeholder = thumbnailRepository.findByImageIdAndSize(image.getDatabaseId(), thumbnailSize);
-                    placeholder.setData(thumbnail.getData());
-                    placeholder.setState(ImageState.PENDING);
+                    if (thumbnail.getData().length == 0) {
+                        placeholder.setState(ImageState.FAILURE);
+                        logger.log(Level.WARNING, "Error while resizing image: " + image.getName());
+                    }else {
+                        placeholder.setData(thumbnail.getData());
+                        placeholder.setState(ImageState.SUCCESS);
+                    }
                     thumbnailRepository.save(placeholder);
                     return placeholder;
                 }).subscribeOn(Schedulers.boundedElastic()))
@@ -126,8 +133,7 @@ public class ImageService {
 
     private Optional<Image> createImageFromThumbnail(Thumbnail thumbnail) {
         return imageRepository.findByDatabaseId(thumbnail.getImageId())
-                .map(imageMetaData ->
-                        createImageFromThumbnail(thumbnail, imageMetaData.getName(), imageMetaData.getExtensionType(), -1));
+                .map(image -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), -1));
     }
 
     private Image createImageFromThumbnail(Thumbnail thumbnail, String imageName, String extensionType, int gridId) {
@@ -141,5 +147,26 @@ public class ImageService {
                 .height(thumbnail.getSize().getHeight())
                 .data(thumbnail.getData())
                 .build();
+    }
+
+    public void reprocessPendingThumbnails() {
+        Flux.fromIterable(thumbnailRepository.findByState(ImageState.PENDING))
+                .doOnNext(this::logReprocessing)
+                .flatMap(thumbnail -> Mono.fromCallable(() -> imageRepository.findByDatabaseId(thumbnail.getImageId()))
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .flatMap(Mono::justOrEmpty)
+                        .flatMap(image -> generateAndSaveThumbnail(image, thumbnail.getSize()))
+                        .doOnNext(this::logSuccessfulReprocessing)
+                )
+                .subscribeOn(Schedulers.boundedElastic())
+                .subscribe();
+    }
+
+    private void logReprocessing(Thumbnail thumbnail) {
+        logger.log(Level.INFO, "Reprocessing: " + thumbnail + " | Size: " + thumbnail.getSize());
+    }
+
+    private void logSuccessfulReprocessing(Thumbnail thumbnail) {
+        logger.info("Processed Thumbnail: " + thumbnail);
     }
 }

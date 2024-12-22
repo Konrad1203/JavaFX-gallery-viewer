@@ -3,6 +3,8 @@ package pl.edu.agh.to.reaktywni.image;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Arrays;
+
 
 @Getter
 @Entity
@@ -39,4 +41,18 @@ public class Image {
     @Setter
     @Lob
     private byte[] data;
+
+    @Override
+    public String toString() {
+        return "Image{" +
+                "databaseId=" + databaseId +
+                ", gridPlacementId=" + gridPlacementId +
+                ", imageState=" + imageState +
+                ", name='" + name + '\'' +
+                ", extensionType='" + extensionType + '\'' +
+                ", width=" + width +
+                ", height=" + height +
+                ", data=" + Arrays.toString(data) +
+                '}';
+    }
 }

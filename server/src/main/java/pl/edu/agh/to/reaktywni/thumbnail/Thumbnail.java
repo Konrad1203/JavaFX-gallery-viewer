@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import pl.edu.agh.to.reaktywni.image.ImageState;
 
+import java.util.Arrays;
+
 
 @Getter
 @Entity
@@ -21,7 +23,7 @@ public class Thumbnail {
 
     @Setter
     @Enumerated(EnumType.STRING)
-    private ImageState state = ImageState.PENDING;
+    private ImageState state;
 
     public Thumbnail() {}
 
@@ -29,11 +31,30 @@ public class Thumbnail {
         this.imageId = imageId;
         this.size = size;
         setData(new byte[0]);
+        this.state = ImageState.PENDING;
     }
 
     public void setData(byte[] data) {
         this.data = data;
         this.state = ImageState.SUCCESS;
+    }
+
+    @Override
+    public String toString() {
+        return "Thumbnail{" +
+                "id=" + id +
+                ", imageId=" + imageId +
+                ", size=" + size +
+                ", data=" + getPrintingData() +
+                ", state=" + state +
+                '}';
+    }
+
+    private String getPrintingData(){
+        if (data == null || data.length == 0) {
+            return "[]";
+        }
+        return "[length=" + data.length + "]";
     }
 
     public void setFailure() {
