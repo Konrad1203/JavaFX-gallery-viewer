@@ -279,7 +279,7 @@ public class ImageGalleryPresenter {
 
         public void placeImage(ThumbnailSize size, Image image) {
             imageDBId = image.getDatabaseId();
-            if (image.getImageState() != ImageState.FAILURE) {
+            if (image.getImageState() == ImageState.SUCCESS) {
                 if (!isNameFilled()) nameLabel.setText(image.getName());
                 imageView.setImage(new javafx.scene.image.Image(new ByteArrayInputStream(image.getData()), size.imageWidth, size.imageHeight, false, false));
             } else {
