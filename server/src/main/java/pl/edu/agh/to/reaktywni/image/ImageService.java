@@ -62,78 +62,83 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::decode)
                 .doOnNext(this::logImageData)
                 .map(imageRepository::save)
-                .doOnNext(this::savePlaceholderThumbnails)
+                .doOnNext(this::saveEmptyThumbnails)
                 .doOnNext(image -> Mono.fromRunnable(() -> generateAndSaveOtherThumbnails(image, ThumbnailSize.valueOf(size)))
                         .subscribeOn(Schedulers.boundedElastic())
                         .subscribe())
                 .flatMap(image -> processThumbnailAndReturnImage(image, ThumbnailSize.valueOf(size)))
-                .doOnNext(this::logThumbnailData)
+                .doOnNext(this::logProcessedData)
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
-    private void savePlaceholderThumbnails(Image image) {
-        Arrays.stream(ThumbnailSize.values())
-                .forEach(size -> {
-                    Thumbnail placeholder = new Thumbnail(image.getDatabaseId(), size);
-                    thumbnailRepository.save(placeholder);
-                });
-    }
-
-    private void logImageData(Image image) {
-        logger.log(Level.INFO, "Received image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
-    }
-
-    private void logThumbnailData(Image image) {
-        logger.log(Level.INFO, "To be sent: ImageId: " + image.getDatabaseId() + ", " + image.getGridPlacementId() +
-                " | Size: " + image.getWidth() + "x" + image.getHeight() + " | Status: " + image.getImageState());
-    }
-
-    private void logThumbnailData(Thumbnail thumbnail) {
-        logger.log(Level.INFO, "Thumbnail: ImageId: " + thumbnail.getImageId() + " | Size: " + thumbnail.getSize() + " | Status: " + thumbnail.getState());
+    private void saveEmptyThumbnails(Image image) {
+        thumbnailRepository.saveAll(
+                Arrays.stream(ThumbnailSize.values())
+                        .map(size -> new Thumbnail(image.getDatabaseId(), size))
+                        .toList()
+        );
     }
 
     private Mono<Image> processThumbnailAndReturnImage(Image image, ThumbnailSize thumbnailSize) {
-        return generateAndSaveThumbnail(image, thumbnailSize)
+        return generateAndUpdateThumbnail(image, thumbnailSize)
                 .map(thumbnail -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), image.getGridPlacementId()));
     }
 
     private void generateAndSaveOtherThumbnails(Image image, ThumbnailSize thumbnailSize) {
         Flux.fromStream(Arrays.stream(ThumbnailSize.values())
                         .filter(size -> !size.equals(thumbnailSize)))
-                .flatMap(size -> generateAndSaveThumbnail(image, size))
+                .flatMap(size -> generateAndUpdateThumbnail(image, size))
                 .subscribe();
     }
 
-    private Mono<Thumbnail> generateAndSaveThumbnail(Image image, ThumbnailSize thumbnailSize) {
+    private Mono<Thumbnail> generateAndUpdateThumbnail(Image image, ThumbnailSize thumbnailSize) {
         return Mono.fromCallable(() -> imageResizer.createThumbnail(image, thumbnailSize))
                 .subscribeOn(Schedulers.boundedElastic())
-                .flatMap(thumbnail -> Mono.fromCallable(() -> {
-                    Thumbnail placeholder = thumbnailRepository.findByImageIdAndSize(image.getDatabaseId(), thumbnailSize);
-                    if (thumbnail.getData().length == 0) {
-                        placeholder.setState(ImageState.FAILURE);
-                        logger.log(Level.WARNING, "Error while resizing image: " + image.getName());
-                    }else {
-                        placeholder.setData(thumbnail.getData());
-                        placeholder.setState(ImageState.SUCCESS);
-                    }
-                    thumbnailRepository.save(placeholder);
-                    return placeholder;
-                }).subscribeOn(Schedulers.boundedElastic()))
-                .doOnNext(this::logThumbnailData)
-                .doOnError(error -> {
-                    Mono.fromCallable(() -> {
-                        Thumbnail placeholder = thumbnailRepository.findByImageIdAndSize(image.getDatabaseId(), thumbnailSize);
-                        placeholder.setFailure();
-                        thumbnailRepository.save(placeholder);
-                        return placeholder;
-                    }).subscribeOn(Schedulers.boundedElastic()).subscribe();
-                });
+                .flatMap(thumbnail -> updateEmptyThumbnail(thumbnail, image, thumbnailSize))
+                .doOnError(error -> updateEmptyThumbnailOnError(image, thumbnailSize)
+                        .subscribe());
+    }
+
+    private Mono<Thumbnail> updateEmptyThumbnail(Thumbnail readyThumbnail, Image image, ThumbnailSize thumbnailSize) {
+        return Mono.fromCallable(() -> {
+            Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getDatabaseId(), thumbnailSize);
+            if (readyThumbnail.getState().equals(ImageState.SUCCESS)) {
+                emptyThumbnail.setData(readyThumbnail.getData());
+            } else {
+                emptyThumbnail.setFailure();
+                logger.log(Level.WARNING, "Resizing image failure: " + image.getName());
+            }
+            thumbnailRepository.save(emptyThumbnail);
+            return emptyThumbnail;
+        }).subscribeOn(Schedulers.boundedElastic());
+    }
+
+    private Mono<Thumbnail> updateEmptyThumbnailOnError(Image image, ThumbnailSize thumbnailSize) {
+        // Czy to się w ogóle kiedyś wykona? Przecież w resizowaniu nie rzucamy błędu
+        return Mono.fromCallable(() -> {
+            Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getDatabaseId(), thumbnailSize);
+            emptyThumbnail.setFailure();
+            thumbnailRepository.save(emptyThumbnail);
+            return emptyThumbnail;
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 
 
     private Optional<Image> createImageFromThumbnail(Thumbnail thumbnail) {
         return imageRepository.findByDatabaseId(thumbnail.getImageId())
                 .map(image -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), -1));
+    }
+
+    public void reprocessPendingThumbnails() {
+        Flux.fromIterable(thumbnailRepository.findByState(ImageState.PENDING))
+                .doOnNext(this::logReprocessing)
+                .flatMap(thumbnail -> Mono.fromCallable(() -> imageRepository.findImageByDatabaseId(thumbnail.getImageId()))
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .flatMap(Mono::justOrEmpty)
+                        .flatMap(image -> generateAndUpdateThumbnail(image, thumbnail.getSize()))
+                        .doOnNext(this::logSuccessfulReprocessing)
+                )
+                .subscribe();
     }
 
     private Image createImageFromThumbnail(Thumbnail thumbnail, String imageName, String extensionType, int gridId) {
@@ -149,24 +154,20 @@ public class ImageService {
                 .build();
     }
 
-    public void reprocessPendingThumbnails() {
-        Flux.fromIterable(thumbnailRepository.findByState(ImageState.PENDING))
-                .doOnNext(this::logReprocessing)
-                .flatMap(thumbnail -> Mono.fromCallable(() -> imageRepository.findByDatabaseId(thumbnail.getImageId()))
-                        .subscribeOn(Schedulers.boundedElastic())
-                        .flatMap(Mono::justOrEmpty)
-                        .flatMap(image -> generateAndSaveThumbnail(image, thumbnail.getSize()))
-                        .doOnNext(this::logSuccessfulReprocessing)
-                )
-                .subscribeOn(Schedulers.boundedElastic())
-                .subscribe();
-    }
-
     private void logReprocessing(Thumbnail thumbnail) {
         logger.log(Level.INFO, "Reprocessing: " + thumbnail + " | Size: " + thumbnail.getSize());
     }
 
     private void logSuccessfulReprocessing(Thumbnail thumbnail) {
         logger.info("Processed Thumbnail: " + thumbnail);
+    }
+
+    private void logImageData(Image image) {
+        logger.log(Level.INFO, "Received image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
+    }
+
+    private void logProcessedData(Image image) {
+        logger.log(Level.INFO, "To be sent: ImageId: " + image.getDatabaseId() + ", " + image.getGridPlacementId() +
+                " | Size: " + image.getWidth() + "x" + image.getHeight() + " | Status: " + image.getImageState());
     }
 }

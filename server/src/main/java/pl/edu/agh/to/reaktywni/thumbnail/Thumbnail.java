@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import pl.edu.agh.to.reaktywni.image.ImageState;
 
-import java.util.Arrays;
-
 
 @Getter
 @Entity
@@ -30,7 +28,7 @@ public class Thumbnail {
     public Thumbnail(int imageId, ThumbnailSize size) {
         this.imageId = imageId;
         this.size = size;
-        setData(new byte[0]);
+        this.data = new byte[0];
         this.state = ImageState.PENDING;
     }
 
@@ -50,7 +48,7 @@ public class Thumbnail {
                 '}';
     }
 
-    private String getPrintingData(){
+    private String getPrintingData() {
         if (data == null || data.length == 0) {
             return "[]";
         }

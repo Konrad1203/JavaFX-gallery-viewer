@@ -27,7 +27,6 @@ import pl.edu.agh.to.reaktywni.util.FilesToImagesConverter;
 import pl.edu.agh.to.reaktywni.model.Image;
 import pl.edu.agh.to.reaktywni.model.ImagePipeline;
 import pl.edu.agh.to.reaktywni.model.ImageState;
-import reactor.core.publisher.Flux;
 
 
 @Component
@@ -152,7 +151,7 @@ public class ImageGalleryPresenter {
                             alert.setTitle("Thumbnail download error");
                             alert.setHeaderText("Cannot receive data from the server");
                             alert.setContentText("Check if the server is running and try again");
-                            alert.showAndWait();
+                            alert.show();
                         }));
     }
 

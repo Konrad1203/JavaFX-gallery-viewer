@@ -12,18 +12,18 @@ public class Image {
     private int databaseId;
 
     private final int gridPlacementId;
+
     private ImageState imageState;
 
     private String name;
 
     private final String extensionType;
-    @Setter
-    private int width;
-    @Setter
-    private int height;
 
-    @Setter
-    private byte[] data;
+    @Setter private int width;
+
+    @Setter private int height;
+
+    @Setter private byte[] data;
 
 
     public static ImageBuilder getBuilder() {
