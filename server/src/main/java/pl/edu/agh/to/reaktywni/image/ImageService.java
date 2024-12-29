@@ -15,6 +15,7 @@ import reactor.core.scheduler.Schedulers;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -44,6 +45,16 @@ public class ImageService {
 
     public Flux<Image> getThumbnails(String size) {
         return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySize(ThumbnailSize.valueOf(size)))
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMapMany(Flux::fromIterable)
+                .map(this::createImageFromThumbnail)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .doOnNext(Base64ImageDataCodec::encode);
+    }
+
+    public Flux<Image> getThumbnailsExcludingSet(String size, Set<Integer> ids) {
+        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySizeExcludingSet(ThumbnailSize.valueOf(size), List.copyOf(ids)))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
                 .map(this::createImageFromThumbnail)

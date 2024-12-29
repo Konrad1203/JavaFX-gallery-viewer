@@ -7,6 +7,8 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailSize;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Set;
 import java.util.stream.Stream;
 
 
@@ -39,6 +41,14 @@ public class ImageController {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
         return imageService.getThumbnails(size);
+    }
+
+    @GetMapping("/thumbnails/excluding")
+    public Flux<Image> getThumbnailsExcludingSet(@RequestParam String size, @RequestParam Set<Integer> ids) {
+        if (Stream.of(ThumbnailSize.values()).map(Enum::toString).noneMatch(size::equalsIgnoreCase)) {
+            return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
+        }
+        return imageService.getThumbnailsExcludingSet(size, ids);
     }
 
     @GetMapping("/thumbnails/count")

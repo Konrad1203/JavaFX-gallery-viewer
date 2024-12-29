@@ -110,10 +110,7 @@ public class ImageGalleryPresenter {
         long newImagesCount = count - gridIndex;
         AtomicInteger newImagesCounter = new AtomicInteger(gridIndex);
         addStartPlaceholdersToGrid(newImagesCount);
-        // TODO - improve fetching to "only new" thumbnails
-        imagePipeline.getThumbnails(thumbnailsSize.toString())
-                .filter(image -> !imageVBoxFromDBId.containsKey(image.getId()))
-                .take(newImagesCount)
+        imagePipeline.getThumbnailsExcludingSet(thumbnailsSize.toString(), imageVBoxFromDBId.keySet())
                 .subscribe(image -> replacePlaceholderWithImage(image, newImagesCounter.getAndIncrement()),
                         e -> logger.log(Level.SEVERE,"Error: " + e.getMessage()),
                         () -> logger.info("Loaded all images"));
