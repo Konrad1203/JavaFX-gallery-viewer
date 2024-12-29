@@ -13,6 +13,7 @@ import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -32,6 +33,7 @@ import pl.edu.agh.to.reaktywni.model.ImageState;
 public class ImageGalleryPresenter {
 
     private static final int IMAGE_NAME_HEIGHT = 40;
+    private static final int THUMBNAILS_FETCHING_DELAY = 10_000;
 
     private static final Logger logger = Logger.getLogger(ImageGalleryPresenter.class.getName());
 
@@ -94,6 +96,28 @@ public class ImageGalleryPresenter {
         });
         sizeSlider.setOnMouseReleased(event -> updateThumbnailSizeValue());
         sizeSlider.setOnKeyPressed(event -> updateThumbnailSizeValue());
+    }
+
+    @Scheduled(initialDelay = THUMBNAILS_FETCHING_DELAY, fixedDelay = THUMBNAILS_FETCHING_DELAY)
+    private void fetchNewThumbnails() {
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
+                .subscribe(
+                        count -> {
+                            if (count == null) throw new IllegalStateException("Cannot get thumbnails count");
+                            if (count == gridIndex) return;
+                            logger.info("Fetching new thumbnails");
+                            long newImagesCount = count - gridIndex;
+                            AtomicInteger newImagesCounter = new AtomicInteger(gridIndex);
+                            addStartPlaceholdersToGrid(newImagesCount);
+                            // TODO - improve fetching to "only new" thumbnails
+                            imagePipeline.getThumbnails(thumbnailsSize.toString())
+                                    .filter(image -> !imageVBoxFromDBId.containsKey(image.getId()))
+                                    .take(newImagesCount)
+                                    .subscribe(image -> Platform.runLater(() -> replacePlaceholderWithImage(image, newImagesCounter.getAndIncrement())),
+                                            e -> logger.log(Level.SEVERE,"Error: " + e.getMessage()),
+                                            () -> logger.info("Loaded all images"));
+                        },
+                        error -> logger.log(Level.SEVERE,"Error: " + error.getMessage()));
     }
 
     private void updateThumbnailSizeValue() {
