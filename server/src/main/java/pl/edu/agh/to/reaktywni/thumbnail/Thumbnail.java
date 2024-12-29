@@ -9,6 +9,10 @@ import pl.edu.agh.to.reaktywni.image.ImageState;
 
 @Getter
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_original_image", columnList = "IMAGE_ID"),
+        @Index(name = "idx_thumbnail_size", columnList = "SIZE")
+})
 public class Thumbnail {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

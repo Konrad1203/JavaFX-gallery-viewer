@@ -3,17 +3,15 @@ package pl.edu.agh.to.reaktywni.image;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Arrays;
-
 
 @Getter
-@Entity
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
 public class Image {
 
-    @Setter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -21,24 +19,18 @@ public class Image {
     @Transient
     private int gridId;
 
-    @Setter
     @Transient
     @Builder.Default
     private ImageState imageState = ImageState.PENDING;
 
-    @Setter
     private String name;
 
-    @Setter
     private String extensionType;
 
-    @Setter
     private int width;
 
-    @Setter
     private int height;
 
-    @Setter
     @Lob
     private byte[] data;
 
@@ -52,7 +44,7 @@ public class Image {
                 ", extensionType='" + extensionType + '\'' +
                 ", width=" + width +
                 ", height=" + height +
-                ", data=" + Arrays.toString(data) +
+                ", data_len=" + data.length +
                 '}';
     }
 }

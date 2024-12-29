@@ -15,8 +15,15 @@ public interface ThumbnailRepository extends JpaRepository<Thumbnail, Integer> {
 
     Long countBySize(ThumbnailSize size);
 
+    @Query("SELECT count(t) FROM Thumbnail t WHERE t.image.id = :id")
+    Long countByImageId(int id);
+
+    @Query("SELECT t FROM Thumbnail t WHERE t.image.id = :id")
+    List<Thumbnail> findByImageId(int id);
+
     @Query("SELECT t FROM Thumbnail t WHERE t.image.id = :id AND t.size = :size")
     Thumbnail findByImageIdAndSize(int id, ThumbnailSize size);
 
-    Iterable<Thumbnail> findByState(ImageState imageState);
+    @Query("SELECT t FROM Thumbnail t JOIN FETCH t.image WHERE t.state = :imageState")
+    Iterable<Thumbnail> findByStateWithImages(ImageState imageState);
 }

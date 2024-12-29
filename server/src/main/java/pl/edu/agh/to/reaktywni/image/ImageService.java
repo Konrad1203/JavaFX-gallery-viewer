@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -128,8 +129,42 @@ public class ImageService {
                 .map(image -> createImageFromThumbnail(thumbnail, image.name(), image.extensionType(), -1));
     }
 
+    public void createEmptyThumbnailsIfMissing() {
+        long imagesCount = imageRepository.count();
+        long thumbnailsCount = thumbnailRepository.count();
+        if (imagesCount * ThumbnailSize.SIZES_COUNT == thumbnailsCount) {
+            return;
+        }
+        logger.info("Creating missing thumbnails");
+        Flux.fromIterable(imageRepository.findAll())
+                .doOnNext(this::saveMissingThumbnails)
+                .subscribe();
+    }
+
+    private void saveMissingThumbnails(Image image) {
+        if (thumbnailRepository.countByImageId(image.getId()) == ThumbnailSize.SIZES_COUNT) {
+            return;
+        }
+        List<ThumbnailSize> existingSizes = thumbnailRepository.findByImageId(image.getId()).stream()
+                .map(Thumbnail::getSize)
+                .toList();
+
+        List<Thumbnail> missingThumbnails = Arrays.stream(ThumbnailSize.values())
+                .filter(size -> !existingSizes.contains(size))
+                .map(size -> new Thumbnail(image, size))
+                .toList();
+
+        thumbnailRepository.saveAll(missingThumbnails);
+    }
+
     public void reprocessPendingThumbnails() {
-        Flux.fromIterable(thumbnailRepository.findByState(ImageState.PENDING))
+        for (ImageState state : new ImageState[] {ImageState.PENDING, ImageState.FAILURE}) {
+            reprocessPendingThumbnails(state);
+        }
+    }
+
+    private void reprocessPendingThumbnails(ImageState state) {
+        Flux.fromIterable(thumbnailRepository.findByStateWithImages(state))
                 .doOnNext(this::logReprocessing)
                 .flatMap(thumbnail -> Mono.fromCallable(thumbnail::getImage)
                         .subscribeOn(Schedulers.boundedElastic())

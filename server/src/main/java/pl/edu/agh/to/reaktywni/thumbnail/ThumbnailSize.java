@@ -13,6 +13,8 @@ public enum ThumbnailSize {
     private final int width;
     private final int height;
 
+    public static final int SIZES_COUNT = ThumbnailSize.values().length;
+
     ThumbnailSize(int width, int height) {
         this.width = width;
         this.height = height;
