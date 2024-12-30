@@ -7,7 +7,6 @@ import org.springframework.test.context.ActiveProfiles;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailSize;
-import pl.edu.agh.to.reaktywni.util.Resizer;
 import reactor.core.publisher.Flux;
 
 import javax.imageio.ImageIO;
@@ -16,6 +15,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.List;
+import java.util.Optional;
 
 import reactor.test.StepVerifier;
 
@@ -33,9 +34,6 @@ public class ImageServiceTest {
 
     @Autowired
     private ImageRepository imageRepository;
-
-    @Autowired
-    private Resizer imageResizer;
 
     private static Image getTestImage(int width, int height, int size) {
         return Image.builder()
@@ -89,44 +87,51 @@ public class ImageServiceTest {
 
     @Test
     public void testGetThumbnails() {
-        Image img = new Image();
-        img.setId(1);
-        Thumbnail thumbnail = new Thumbnail(img, ThumbnailSize.MEDIUM);
-        thumbnail.setData(new byte[50]);
-        thumbnailRepository.save(thumbnail);
+        thumbnailRepository.deleteAll();
+        imageRepository.deleteAll();
 
+        ThumbnailSize size = ThumbnailSize.MEDIUM;
         Image image = getTestImage(500, 300, 100);
         imageRepository.save(image);
 
-        Flux<Image> thumbnails = imageService.getThumbnails("MEDIUM");
+        Thumbnail thumbnail = new Thumbnail(image, size);
+        thumbnail.setData(new byte[50]);
+        thumbnailRepository.save(thumbnail);
+
+        Flux<Image> thumbnails = imageService.getThumbnails(String.valueOf(size));
 
         StepVerifier.create(thumbnails)
                 .expectNextMatches(t -> {
-                    assertEquals(320, t.getWidth());
-                    assertEquals(180, t.getHeight());
+                    assertEquals(size.getWidth(), t.getWidth());
+                    assertEquals(size.getHeight(), t.getHeight());
                     return true;
                 })
                 .verifyComplete();
     }
 
-    /*@Test
+    @Test
     public void getThumbnailsCountTest() {
-        Image image1 = getTestImage(500, 300, 100);
-        image1.setImageState(ImageState.SUCCESS);
-        Image image2 = getTestImage(500, 300, 100);
-        image2.setImageState(ImageState.SUCCESS);
-        Image image3 = getTestImage(500, 300, 100);
-        image3.setImageState(ImageState.SUCCESS);
+        Image image = imageRepository.save(getTestImage(500, 300, 100));
 
-        imageService.createAndSaveThumbnail(image1);
-        imageService.createAndSaveThumbnail(image2);
-        imageService.createAndSaveThumbnail(image3);
+        List<Thumbnail> thumbnails = List.of(
+                new Thumbnail(image, ThumbnailSize.SMALL),
+                new Thumbnail(image, ThumbnailSize.SMALL),
+                new Thumbnail(image, ThumbnailSize.MEDIUM),
+                new Thumbnail(image, ThumbnailSize.LARGE),
+                new Thumbnail(image, ThumbnailSize.LARGE),
+                new Thumbnail(image, ThumbnailSize.LARGE)
+        );
+        thumbnailRepository.saveAll(thumbnails);
 
-        Optional<Long> count = imageService.getThumbnailsCount().blockOptional();
-        if (count.isEmpty()) {
-            fail("Count is empty");
-        }
+        Optional<Long> smallCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.SMALL)).blockOptional();
+        if (smallCount.isEmpty()) fail("smallCount is empty");
+        Optional<Long> mediumCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.MEDIUM)).blockOptional();
+        if (mediumCount.isEmpty()) fail("mediumCount is empty");
+        Optional<Long> largeCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.LARGE)).blockOptional();
+        if (largeCount.isEmpty()) fail("largeCount is empty");
 
-        assertEquals(3L, count.get());
-    }*/
+        assertEquals(2L, smallCount.get());
+        assertEquals(1L, mediumCount.get());
+        assertEquals(3L, largeCount.get());
+    }
 }
