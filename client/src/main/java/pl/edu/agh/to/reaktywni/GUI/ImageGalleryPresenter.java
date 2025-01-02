@@ -116,12 +116,36 @@ public class ImageGalleryPresenter {
                         () -> logger.info("Loaded all images"));
     }
 
+    public void refreshClientOnServerRestart(){
+        gridPane.getChildren().clear();
+        modifyGridPane();
+        imageVBoxFromGridId.clear();
+        imageVBoxFromDBId.clear();
+        gridIndex = 0;
+
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
+                .subscribe(
+                        this::initializeThumbnailsOnStart,
+                        error -> Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Thumbnail download error");
+                            alert.setHeaderText("Cannot receive data from the server");
+                            alert.setContentText("Check if the server is running and try again");
+                            alert.show();
+                        })
+//                        this::initializeThumbnailsOnStart, this::showInitializationError
+        );
+    }
+
+
     private void updateThumbnailSizeValue() {
         ThumbnailSize size = ThumbnailSize.getFromId((int) sizeSlider.getValue());
         if (!thumbnailsSize.equals(size)) {
             thumbnailsSize = size;
             refreshThumbnailsOnGrid();
         }
+
+//        refreshClientOnServerRestart();
     }
 
     private void refreshThumbnailsOnGrid() {
@@ -202,6 +226,7 @@ public class ImageGalleryPresenter {
                     .blockLast()
             ).start();
         } catch (IOException e) {
+            handleServerError(e);
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Image processing error");
             alert.setHeaderText("Failed to process images from files");

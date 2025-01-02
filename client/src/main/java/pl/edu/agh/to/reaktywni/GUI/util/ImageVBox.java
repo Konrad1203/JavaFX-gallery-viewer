@@ -33,7 +33,13 @@ public class ImageVBox extends VBox {
         if (image.getImageState() == ImageState.SUCCESS) {
             if (!isNameFilled()) nameLabel.setText(image.getName());
             imageView.setImage(new javafx.scene.image.Image(new ByteArrayInputStream(image.getData()), size.getImageWidth(), size.getImageHeight(), false, false));
-        } else {
+        }
+        else if (image.getImageState() == ImageState.PENDING) {
+            System.out.println(image.getName() + "PENDING IMAG111!!!!");
+            nameLabel.setText(image.getName());
+            imageView.setImage(size.getPlaceholder());
+        }
+        else {
             nameLabel.setText("Error: " + image.getName());
             imageView.setImage(size.getErrorImage());
         }

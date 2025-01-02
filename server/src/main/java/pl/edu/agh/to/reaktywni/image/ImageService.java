@@ -117,7 +117,6 @@ public class ImageService {
             if (readyThumbnail.getState().equals(ImageState.SUCCESS)) {
                 emptyThumbnail.setData(readyThumbnail.getData());
             } else {
-                emptyThumbnail.setFailure();
                 logger.log(Level.WARNING, "Resizing image failure: " + image.getName());
             }
             thumbnailRepository.save(emptyThumbnail);
@@ -128,7 +127,6 @@ public class ImageService {
     private Mono<Thumbnail> updateEmptyThumbnailOnError(Image image, ThumbnailSize thumbnailSize) {
         return Mono.fromCallable(() -> {
             Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getId(), thumbnailSize);
-            emptyThumbnail.setFailure();
             thumbnailRepository.save(emptyThumbnail);
             return emptyThumbnail;
         }).subscribeOn(Schedulers.boundedElastic());
