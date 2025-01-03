@@ -35,7 +35,6 @@ public class ImageVBox extends VBox {
             imageView.setImage(new javafx.scene.image.Image(new ByteArrayInputStream(image.getData()), size.getImageWidth(), size.getImageHeight(), false, false));
         }
         else if (image.getImageState() == ImageState.PENDING) {
-            System.out.println(image.getName() + "PENDING IMAG111!!!!");
             nameLabel.setText(image.getName());
             imageView.setImage(size.getPlaceholder());
         }

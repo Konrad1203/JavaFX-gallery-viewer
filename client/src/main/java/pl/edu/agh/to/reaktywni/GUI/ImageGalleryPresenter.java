@@ -39,7 +39,7 @@ public class ImageGalleryPresenter {
     @FXML private GridPane gridPane;
 
     private List<File> files;
-    private int gridIndex = 0;
+    private final AtomicInteger gridIndex = new AtomicInteger(0);
     private ThumbnailSize thumbnailsSize;
     private final List<ImageVBox> imageVBoxFromGridId = new ArrayList<>();
     private final Map<Integer, ImageVBox> imageVBoxFromDBId = new HashMap<>();
@@ -105,10 +105,10 @@ public class ImageGalleryPresenter {
 
     private void addNewThumbnails(Long count) {
         if (count == null) throw new IllegalStateException("Cannot get thumbnails count");
-        if (count == gridIndex) return;
+        if (count == gridIndex.get()) return;
         logger.info("Fetching new thumbnails");
-        long newImagesCount = count - gridIndex;
-        AtomicInteger newImagesCounter = new AtomicInteger(gridIndex);
+        long newImagesCount = count - gridIndex.get();
+        AtomicInteger newImagesCounter = new AtomicInteger(gridIndex.get());
         addStartPlaceholdersToGrid(newImagesCount);
         imagePipeline.getThumbnailsExcludingSet(thumbnailsSize.toString(), imageVBoxFromDBId.keySet())
                 .subscribe(image -> replacePlaceholderWithImage(image, newImagesCounter.getAndIncrement()),
@@ -121,7 +121,7 @@ public class ImageGalleryPresenter {
         modifyGridPane();
         imageVBoxFromGridId.clear();
         imageVBoxFromDBId.clear();
-        gridIndex = 0;
+        gridIndex.set(0);
 
         imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
                 .subscribe(
@@ -218,7 +218,7 @@ public class ImageGalleryPresenter {
     private void sendAndReceiveImages() {
         if (files == null) return;
         try {
-            List<Image> imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex);
+            List<Image> imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex.get());
             addNamedPlaceholdersToGrid(imagesToSend);
             new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend, thumbnailsSize.toString())
                     .doOnNext(image -> replacePlaceholderWithImage(image, image.getGridId()))
@@ -249,7 +249,7 @@ public class ImageGalleryPresenter {
     private void addStartPlaceholdersToGrid(long count) {
         for (int i = 0; i < count; i++) {
             ImageVBox imageVBox = new ImageVBox(thumbnailsSize, "............", IMAGE_NAME_HEIGHT);
-            final int index = gridIndex++;
+            final int index = gridIndex.getAndIncrement();
             imageVBoxFromGridId.add(imageVBox);
             Platform.runLater(() -> gridPane.add(imageVBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
         }
@@ -258,7 +258,7 @@ public class ImageGalleryPresenter {
     private void addNamedPlaceholdersToGrid(List<Image> images) {
         for (Image image : images) {
             ImageVBox imageVBox = new ImageVBox(thumbnailsSize, image.getName(), IMAGE_NAME_HEIGHT);
-            final int index = gridIndex++;
+            final int index = gridIndex.getAndIncrement();
             imageVBoxFromGridId.add(imageVBox);
             Platform.runLater(() -> gridPane.add(imageVBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
         }
