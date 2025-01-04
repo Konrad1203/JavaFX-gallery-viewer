@@ -21,11 +21,9 @@ import java.util.logging.Logger;
 
 import pl.edu.agh.to.reaktywni.GUI.util.ImageVBox;
 import pl.edu.agh.to.reaktywni.GUI.util.ThumbnailSize;
-import pl.edu.agh.to.reaktywni.model.ImageState;
 import pl.edu.agh.to.reaktywni.util.FilesToImagesConverter;
 import pl.edu.agh.to.reaktywni.model.Image;
 import pl.edu.agh.to.reaktywni.model.ImagePipeline;
-import reactor.core.scheduler.Schedulers;
 
 
 @Component
@@ -40,12 +38,11 @@ public class ImageGalleryPresenter {
     @FXML private Slider sizeSlider;
     @FXML private GridPane gridPane;
 
-    private List<File> selectedFiles;
+    private List<File> files;
+    private final AtomicInteger gridIndex = new AtomicInteger(0);
     private ThumbnailSize thumbnailsSize;
-    private final List<ImageVBox> imageVBoxes = new ArrayList<>();
-    private final List<ImageVBox> emptyImageVBoxes = new ArrayList<>();
-    private final List<Integer> imageIds = new ArrayList<>();
-    private final AtomicInteger processingThreads = new AtomicInteger(0);
+    private final List<ImageVBox> imageVBoxFromGridId = new ArrayList<>();
+    private final Map<Integer, ImageVBox> imageVBoxFromDBId = new HashMap<>();
 
     private final ImagePipeline imagePipeline;
     private final StageInitializer stageInitializer;
@@ -73,22 +70,23 @@ public class ImageGalleryPresenter {
                 return switch (string) { case "Small" -> 0.; case "Medium" -> 1.; case "Large" -> 2.; default -> 3.; };
             }
         });
-        sizeSlider.setOnMouseReleased(event -> updateThumbnailSize());
-        sizeSlider.setOnKeyPressed(event -> updateThumbnailSize());
+        sizeSlider.setOnMouseReleased(event -> updateThumbnailSizeValue());
+        sizeSlider.setOnKeyPressed(event -> updateThumbnailSizeValue());
     }
 
     private void initializeThumbnailsOnStart(Long count) {
+        if (count == null) throw new IllegalStateException("Cannot get thumbnails count");
         if (count == 0) return;
         addStartPlaceholdersToGrid(count);
+        AtomicInteger startImagesCounter = new AtomicInteger(0);
         imagePipeline.getThumbnails(thumbnailsSize.toString())
-                .index()
-                .subscribe(image -> replacePlaceholderWithImage(image.getT2(), image.getT1().intValue()),
-                        e -> logger.log(Level.SEVERE,"initializeThumbnailsOnStartError: " + e.getMessage()),
+                .subscribe(image -> replacePlaceholderWithImage(image, startImagesCounter.getAndIncrement()),
+                        e -> logger.log(Level.SEVERE,"Error: " + e.getMessage()),
                         () -> logger.info("Loaded all images"));
     }
 
     private void showInitializationError(Throwable error) {
-        logger.log(Level.SEVERE,"showInitializationError: " + error.getMessage());
+        logger.log(Level.SEVERE,"Error: " + error.getMessage());
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Initialization error");
@@ -101,49 +99,64 @@ public class ImageGalleryPresenter {
 
     @Scheduled(initialDelay = THUMBNAILS_FETCHING_DELAY, fixedDelay = THUMBNAILS_FETCHING_DELAY)
     private void fetchNewThumbnails() {
-        if (processingThreads.get() != 0) return;
         imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
-                .subscribe(
-                        count -> {
-                            if (!emptyImageVBoxes.isEmpty() || count != imageVBoxes.size()) downloadAndUpdateThumbnails(count);
-                        },
-                        error -> logger.log(Level.SEVERE,"fetchNewThumbnailsError: " + error.getMessage()));
+                .subscribe(this::addNewThumbnails, error -> logger.log(Level.SEVERE,"Error: " + error.getMessage()));
     }
 
-    private void downloadAndUpdateThumbnails(Long count) {
+    private void addNewThumbnails(Long count) {
+        if (count == null) throw new IllegalStateException("Cannot get thumbnails count");
+        if (count == gridIndex.get()) return;
         logger.info("Fetching new thumbnails");
-        if (count > imageVBoxes.size()) {
-            addStartPlaceholdersToGrid(count - imageVBoxes.size());
-        }
-        imagePipeline.getThumbnailsExcludingList(thumbnailsSize.toString(), imageIds)
-                .index()
-                .subscribe(
-                        image -> {
-                            logger.info("Received image: " + image.getT2());
-                            ImageVBox imageVBox = emptyImageVBoxes.get(image.getT1().intValue());
-                            replacePlaceholderWithImage(image.getT2(), imageVBox.getGridId());
-                        },
-                        e -> logger.log(Level.SEVERE,"downloadAndUpdateThumbnailsError: " + e.getMessage()),
+        long newImagesCount = count - gridIndex.get();
+        AtomicInteger newImagesCounter = new AtomicInteger(gridIndex.get());
+        addStartPlaceholdersToGrid(newImagesCount);
+        imagePipeline.getThumbnailsExcludingSet(thumbnailsSize.toString(), imageVBoxFromDBId.keySet())
+                .subscribe(image -> replacePlaceholderWithImage(image, newImagesCounter.getAndIncrement()),
+                        e -> logger.log(Level.SEVERE,"Error: " + e.getMessage()),
                         () -> logger.info("Loaded all images"));
     }
 
-    private void updateThumbnailSize() {
+    public void refreshClientOnServerRestart(){
+        gridPane.getChildren().clear();
+        modifyGridPane();
+        imageVBoxFromGridId.clear();
+        imageVBoxFromDBId.clear();
+        gridIndex.set(0);
+
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
+                .subscribe(
+                        this::initializeThumbnailsOnStart,
+                        error -> Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Thumbnail download error");
+                            alert.setHeaderText("Cannot receive data from the server");
+                            alert.setContentText("Check if the server is running and try again");
+                            alert.show();
+                        })
+//                        this::initializeThumbnailsOnStart, this::showInitializationError
+        );
+    }
+
+
+    private void updateThumbnailSizeValue() {
         ThumbnailSize size = ThumbnailSize.getFromId((int) sizeSlider.getValue());
         if (!thumbnailsSize.equals(size)) {
             thumbnailsSize = size;
             refreshThumbnailsOnGrid();
         }
+
+//        refreshClientOnServerRestart();
     }
 
     private void refreshThumbnailsOnGrid() {
         gridPane.getChildren().clear();
-        modifyGridPaneRowAndColCount();
+        modifyGridPane();
         updateImageVBoxesSize();
         placeVBoxesToGrid();
         downloadAndPlaceThumbnails();
     }
 
-    private void modifyGridPaneRowAndColCount() {
+    private void modifyGridPane() {
         int columns = thumbnailsSize.getColumnCount();
         int current_columns = gridPane.getColumnCount();
         if (current_columns < columns) {
@@ -158,25 +171,25 @@ public class ImageGalleryPresenter {
     }
 
     private void updateImageVBoxesSize() {
-        for (ImageVBox imageVBox : imageVBoxes) {
+        for (ImageVBox imageVBox : imageVBoxFromGridId) {
             imageVBox.changeVBoxSize(thumbnailsSize, IMAGE_NAME_HEIGHT);
         }
     }
 
     private void placeVBoxesToGrid() {
-        for (int index = 0; index < imageVBoxes.size(); index++) {
-            gridPane.add(imageVBoxes.get(index), index % gridPane.getColumnCount(), index / gridPane.getColumnCount());
+        for (int index = 0; index < imageVBoxFromGridId.size(); index++) {
+            gridPane.add(imageVBoxFromGridId.get(index), index % gridPane.getColumnCount(), index / gridPane.getColumnCount());
         }
     }
 
     private void downloadAndPlaceThumbnails() {
         imagePipeline.getThumbnails(thumbnailsSize.toString())
-                .index()
                 .subscribe(
                         image -> {
-                            if (image.getT1() > imageVBoxes.size()) logger.log(Level.SEVERE, "Error: Received image index is out of bounds");
-                            else if (image.getT1() == imageVBoxes.size()) addPlaceholderToGrid("............");
-                            replacePlaceholderWithImage(image.getT2(), image.getT1().intValue());
+                            ImageVBox imageVBox = imageVBoxFromDBId.get(image.getId());
+                            if (imageVBox != null)
+                                imageVBox.placeImage(thumbnailsSize, image, stageInitializer, imagePipeline);
+
                         },
                         error -> Platform.runLater(() -> {
                             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -194,47 +207,38 @@ public class ImageGalleryPresenter {
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Image Files", "*.jpg", "*.jpeg", "*.png", "*.gif")
         );
-        selectedFiles = fileChooser.showOpenMultipleDialog(null);
-        if (selectedFiles != null) {
-            filesSelectedLabel.setText("Selected " + selectedFiles.size() + " files");
+        files = fileChooser.showOpenMultipleDialog(null);
+        if (files != null) {
+            filesSelectedLabel.setText("Selected " + files.size() + " files");
             filesSelectedLabel.setVisible(true);
         }
     }
 
     @FXML
     private void sendAndReceiveImages() {
-        if (selectedFiles == null) return;
-        processingThreads.incrementAndGet();
-        int startCount = imageVBoxes.size();
+        if (files == null) return;
         try {
-            List<Image> imagesToSend = FilesToImagesConverter.convert(selectedFiles);
-            for (int i = 0; i < imagesToSend.size(); i++) imagesToSend.get(i).setGridId(startCount + i);
-            addNamedPlaceholdersToGrid(imagesToSend.stream().map(Image::getName).toList());
-            imagePipeline.sendAndReceiveImages(imagesToSend, thumbnailsSize.toString())
-                    .subscribeOn(Schedulers.boundedElastic())
-                    .subscribe(
-                            image -> replacePlaceholderWithImage(image, image.getGridId()),
-                            this::handleServerError,
-                            processingThreads::decrementAndGet
-                    );
+            List<Image> imagesToSend = FilesToImagesConverter.convertWithPositionsCounting(files, gridIndex.get());
+            addNamedPlaceholdersToGrid(imagesToSend);
+            new Thread(() -> imagePipeline.sendAndReceiveImages(imagesToSend, thumbnailsSize.toString())
+                    .doOnNext(image -> replacePlaceholderWithImage(image, image.getGridId()))
+                    .doOnError(this::handleServerError)
+                    .blockLast()
+            ).start();
         } catch (IOException e) {
+            handleServerError(e);
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Image processing error");
             alert.setHeaderText("Failed to process images from files");
             alert.setContentText("Check if the selected files are images");
             alert.showAndWait();
         }
-        /*finally {
-            selectedFiles = null;
-            filesSelectedLabel.setVisible(false);
-        }*/
     }
 
     private void handleServerError(Throwable e) {
-        processingThreads.set(0);
-        logger.log(Level.SEVERE, "sendAndReceiveImagesError: " + e.getMessage());
+        logger.log(Level.SEVERE, "Error: " + e.getMessage());
         Platform.runLater(() -> {
-            for (ImageVBox imageVBox : imageVBoxes) {
+            for (ImageVBox imageVBox : imageVBoxFromGridId) {
                 if (imageVBox.getImageView().getImage().equals(thumbnailsSize.getPlaceholder())) {
                     imageVBox.getImageView().setImage(thumbnailsSize.getErrorImage());
                 }
@@ -243,26 +247,26 @@ public class ImageGalleryPresenter {
     }
 
     private void addStartPlaceholdersToGrid(long count) {
-        for (int i = 0; i < count; i++) addPlaceholderToGrid("............");
+        for (int i = 0; i < count; i++) {
+            ImageVBox imageVBox = new ImageVBox(thumbnailsSize, "............", IMAGE_NAME_HEIGHT);
+            final int index = gridIndex.getAndIncrement();
+            imageVBoxFromGridId.add(imageVBox);
+            Platform.runLater(() -> gridPane.add(imageVBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
+        }
     }
 
-    private void addNamedPlaceholdersToGrid(List<String> imageNames) {
-        imageNames.forEach(this::addPlaceholderToGrid);
-    }
-
-    private void addPlaceholderToGrid(String imageName) {
-        ImageVBox imageVBox = new ImageVBox(imageVBoxes.size(), thumbnailsSize, imageName, IMAGE_NAME_HEIGHT);
-        imageVBoxes.add(imageVBox);
-        emptyImageVBoxes.add(imageVBox);
-        Platform.runLater(() -> gridPane.add(imageVBox, imageVBox.getGridId() % gridPane.getColumnCount(), imageVBox.getGridId() / gridPane.getColumnCount()));
+    private void addNamedPlaceholdersToGrid(List<Image> images) {
+        for (Image image : images) {
+            ImageVBox imageVBox = new ImageVBox(thumbnailsSize, image.getName(), IMAGE_NAME_HEIGHT);
+            final int index = gridIndex.getAndIncrement();
+            imageVBoxFromGridId.add(imageVBox);
+            Platform.runLater(() -> gridPane.add(imageVBox, index % gridPane.getColumnCount(), index / gridPane.getColumnCount()));
+        }
     }
 
     private void replacePlaceholderWithImage(Image image, int gridId) {
-        ImageVBox imageVBox = imageVBoxes.get(gridId);
-        if (image.getImageState() == ImageState.SUCCESS) {
-            emptyImageVBoxes.remove(imageVBox);
-            imageIds.add(image.getId());
-        }
+        ImageVBox imageVBox = imageVBoxFromGridId.get(gridId);
+        imageVBoxFromDBId.put(image.getId(), imageVBox);
         Platform.runLater(() -> imageVBox.placeImage(thumbnailsSize, image, stageInitializer, imagePipeline));
     }
 }

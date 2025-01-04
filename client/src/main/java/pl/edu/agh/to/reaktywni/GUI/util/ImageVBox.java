@@ -19,10 +19,7 @@ public class ImageVBox extends VBox {
 
     private final Label nameLabel = new Label();
 
-    private final int startGridId;
-
-    public ImageVBox(int startGridId, ThumbnailSize size, String name, int image_name_height) {
-        this.startGridId = startGridId;
+    public ImageVBox(ThumbnailSize size, String name, int image_name_height) {
         imageView.setImage(size.getPlaceholder());
         nameLabel.setText(name);
         nameLabel.setWrapText(true);
@@ -34,26 +31,28 @@ public class ImageVBox extends VBox {
 
     public void placeImage(ThumbnailSize size, Image image, StageInitializer stageInitializer, ImagePipeline imagePipeline) {
         if (image.getImageState() == ImageState.SUCCESS) {
-            nameLabel.setText(image.getName());
+            if (!isNameFilled()) nameLabel.setText(image.getName());
             imageView.setImage(new javafx.scene.image.Image(new ByteArrayInputStream(image.getData()), size.getImageWidth(), size.getImageHeight(), false, false));
-            setOnMouseClicked(event -> stageInitializer.openBigImageView(imagePipeline.getFullImage(image.getId())));
-        } else if (image.getImageState() == ImageState.PENDING) {
-            nameLabel.setText("............");
+        }
+        else if (image.getImageState() == ImageState.PENDING) {
+            nameLabel.setText(image.getName());
             imageView.setImage(size.getPlaceholder());
         }
         else {
             nameLabel.setText("Error: " + image.getName());
             imageView.setImage(size.getErrorImage());
         }
+        setOnMouseClicked(event ->
+                stageInitializer.openBigImageView(imagePipeline.getFullImage(image.getId())));
+    }
+
+    public boolean isNameFilled() {
+        return !nameLabel.getText().startsWith("...");
     }
 
     public void changeVBoxSize(ThumbnailSize size, int image_name_height) {
         setMinHeight(size.getImageHeight() + image_name_height);
         setMaxHeight(size.getImageHeight() + image_name_height);
         imageView.setImage(size.getPlaceholder());
-    }
-
-    public int getGridId() {
-        return startGridId;
     }
 }

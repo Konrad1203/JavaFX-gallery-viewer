@@ -23,6 +23,7 @@
                     </VBox.margin>
                     <Button mnemonicParsing="false" onAction="#openSelectionWindow" text="Select Images" />
                     <Button mnemonicParsing="false" onAction="#sendAndReceiveImages" text="Send" />
+                    <Button mnemonicParsing="false" onAction="#refreshClientOnServerRestart" text="Refresh" />
                 </HBox>
                 <Label fx:id="filesSelectedLabel" text="Wybrano x elementów" visible="false" />
                 <BorderPane.margin>
