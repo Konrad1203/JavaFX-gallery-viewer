@@ -51,13 +51,13 @@ public class ServerClient {
 
     public Flux<Image> getThumbnailsExcludingSet(String thumbnailSize, List<Integer> ids) {
         return webClient.get()
-                .uri("/thumbnails/excluding?size={size}&ids={ids}", thumbnailSize, convertSetToString(ids))
+                .uri("/thumbnails/excluding?size={size}&ids={ids}", thumbnailSize, convertListToString(ids))
                 .retrieve()
                 .bodyToFlux(Image.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsExcludingListError: " + e.getMessage()));
     }
 
-    private String convertSetToString(List<Integer> ids) {
+    private String convertListToString(List<Integer> ids) {
         return String.join(",", ids.stream().map(String::valueOf).toList());
     }
 
