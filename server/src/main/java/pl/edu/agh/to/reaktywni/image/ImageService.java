@@ -136,7 +136,7 @@ public class ImageService {
 
     private Optional<Image> createImageFromThumbnail(Thumbnail thumbnail) {
         return imageRepository.findImageMetaDataById(thumbnail.getImageId())
-                .map(image -> createImageFromThumbnail(thumbnail, image.name(), image.extensionType(), -1));
+                .map(image -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), -1));
     }
 
     public void createEmptyThumbnailsIfMissing() {

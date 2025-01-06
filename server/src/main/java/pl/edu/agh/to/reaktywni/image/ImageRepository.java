@@ -11,8 +11,8 @@ import java.util.Optional;
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Integer> {
 
-    @Query("SELECT new pl.edu.agh.to.reaktywni.image.ImageMetaData(i.name, i.extensionType) FROM Image i WHERE i.id = :id")
-    Optional<ImageMetaData> findImageMetaDataById(int id);
+    @Query("SELECT i.name, i.extensionType FROM Image i WHERE i.id = :id")
+    Optional<ImageMetaDataProjection> findImageMetaDataById(int id);
 
     @Query("SELECT i.id FROM Image i")
     List<Long> findAllIds();
