@@ -1,5 +1,8 @@
 package pl.edu.agh.to.reaktywni.image;
 
+public interface ImageMetaData {
 
-public record ImageMetaData(String name, String extensionType) {
+    String getName();
+
+    String getExtensionType();
 }
