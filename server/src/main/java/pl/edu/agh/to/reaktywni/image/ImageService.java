@@ -144,9 +144,19 @@ public class ImageService {
             return;
         }
         logger.info("Creating missing thumbnails");
-        Flux.fromIterable(imageRepository.findAll())
+        Flux.fromIterable(imageRepository.findAllIds())
+                .publishOn(Schedulers.boundedElastic())
+                .map(Long::intValue)
+                .filter(id -> thumbnailRepository.countByImageId(id) != ThumbnailSize.SIZES_COUNT)
+                .map(this::createEmptyImageWithId)
                 .doOnNext(this::saveMissingThumbnails)
-                .subscribe();
+                .blockLast();
+    }
+
+    private Image createEmptyImageWithId(int id) {
+        Image image = new Image();
+        image.setId(id);
+        return image;
     }
 
     private void saveMissingThumbnails(Image image) {

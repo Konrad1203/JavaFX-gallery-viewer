@@ -7,8 +7,7 @@ import pl.edu.agh.to.reaktywni.model.Image;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-import java.util.Set;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,15 +49,15 @@ public class ServerClient {
                 .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsError: " + e.getMessage()));
     }
 
-    public Flux<Image> getThumbnailsExcludingSet(String thumbnailSize, Set<Integer> ids) {
+    public Flux<Image> getThumbnailsExcludingSet(String thumbnailSize, List<Integer> ids) {
         return webClient.get()
-                .uri("/thumbnails/excluding?size={size}&ids={ids}", thumbnailSize, convertSetToString(ids))
+                .uri("/thumbnails/excluding?size={size}&ids={ids}", thumbnailSize, convertListToString(ids))
                 .retrieve()
                 .bodyToFlux(Image.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsExcludingListError: " + e.getMessage()));
     }
 
-    private String convertSetToString(Set<Integer> ids) {
+    private String convertListToString(List<Integer> ids) {
         return String.join(",", ids.stream().map(String::valueOf).toList());
     }
 
