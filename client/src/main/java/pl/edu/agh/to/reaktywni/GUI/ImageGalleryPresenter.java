@@ -230,6 +230,26 @@ public class ImageGalleryPresenter {
         }*/
     }
 
+    @FXML
+    private void refreshGridOnButton() {
+        gridPane.getChildren().clear();
+        imageVBoxes.clear();
+        emptyImageVBoxes.clear();
+        imageIds.clear();
+
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
+                .subscribe(
+                        this::initializeThumbnailsOnStart,
+                        error -> Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Thumbnail download error");
+                            alert.setHeaderText("Cannot receive data from the server");
+                            alert.setContentText("Check if the server is running and try again");
+                            alert.show();
+                        })
+                );
+    }
+
     private void handleServerError(Throwable e) {
         processingThreads.set(0);
         logger.log(Level.SEVERE, "sendAndReceiveImagesError: " + e.getMessage());
