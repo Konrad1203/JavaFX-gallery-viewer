@@ -1,7 +1,6 @@
 package pl.edu.agh.to.reaktywni.image;
 
 
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
@@ -24,7 +23,7 @@ import java.util.logging.Level;
 public class ImageService {
 
     private final static Logger logger = Logger.getLogger(ImageService.class.getName());
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(ImageService.class);
+    //private static final org.slf4j.Logger log = LoggerFactory.getLogger(ImageService.class);
 
     private final ImageRepository imageRepository;
     private final ThumbnailRepository thumbnailRepository;
@@ -145,9 +144,19 @@ public class ImageService {
             return;
         }
         logger.info("Creating missing thumbnails");
-        Flux.fromIterable(imageRepository.findAll())
+        Flux.fromIterable(imageRepository.findAllIds())
+                .publishOn(Schedulers.boundedElastic())
+                .map(Long::intValue)
+                .filter(id -> thumbnailRepository.countByImageId(id) != ThumbnailSize.SIZES_COUNT)
+                .map(this::createEmptyImageWithId)
                 .doOnNext(this::saveMissingThumbnails)
-                .subscribe();
+                .blockLast();
+    }
+
+    private Image createEmptyImageWithId(int id) {
+        Image image = new Image();
+        image.setId(id);
+        return image;
     }
 
     private void saveMissingThumbnails(Image image) {
@@ -206,11 +215,10 @@ public class ImageService {
     }
 
     private void logImageData(Image image) {
-        logger.log(Level.INFO, "Received image: " + image.getName() + " Size: " + image.getWidth() + "x" + image.getHeight());
+        logger.log(Level.INFO, "Received: " + image);
     }
 
     private void logProcessedData(Image image) {
-        logger.log(Level.INFO, "To be sent: ImageId: " + image.getId() + ", " + image.getGridId() +
-                " | Size: " + image.getWidth() + "x" + image.getHeight() + " | Status: " + image.getImageState());
+        logger.log(Level.INFO, "To be sent: " + image);
     }
 }

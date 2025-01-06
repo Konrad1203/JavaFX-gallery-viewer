@@ -11,7 +11,7 @@ public class Image {
 
     private int id;
 
-    private final int gridId;
+    @Setter private int gridId;
 
     private ImageState imageState;
 
@@ -28,6 +28,20 @@ public class Image {
 
     public static ImageBuilder getBuilder() {
         return new ImageBuilder();
+    }
+
+    @Override
+    public String toString() {
+        return "Image{" +
+                "id=" + id +
+                ", gridId=" + gridId +
+                ", imageState=" + imageState +
+                ", name='" + name + '\'' +
+                ", extensionType='" + extensionType + '\'' +
+                ", width=" + width +
+                ", height=" + height +
+                ", data_len=" + data.length +
+                '}';
     }
 }
 

@@ -7,7 +7,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,8 +34,7 @@ public class ImagePipeline {
     }
 
     private void logImageInfo(Image image) {
-        logger.info("Received image: " + image.getName() +
-                " | Size: " + image.getWidth() + "x" + image.getHeight() + " | State: " + image.getImageState());
+        logger.info("Received: " + image);
     }
 
     public Flux<Image> getThumbnails(String thumbnailSize) {
@@ -44,7 +42,7 @@ public class ImagePipeline {
                 .doOnNext(Base64ImageDataCodec::decode);
     }
 
-    public Flux<Image> getThumbnailsExcludingSet(String thumbnailSize, Set<Integer> ids) {
+    public Flux<Image> getThumbnailsExcludingList(String thumbnailSize, List<Integer> ids) {
         return serverClient.getThumbnailsExcludingSet(thumbnailSize, ids)
                 .doOnNext(Base64ImageDataCodec::decode);
     }

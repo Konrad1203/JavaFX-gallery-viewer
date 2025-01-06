@@ -6,10 +6,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
@@ -18,30 +16,12 @@ import pl.edu.agh.to.reaktywni.model.Image;
 
 
 @Component
-public class StageInitializer implements ApplicationListener<ImageGalleryApp.StageReadyEvent> {
+public class StageInitializer {
 
     private final ApplicationContext applicationContext;
 
     public StageInitializer(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
-    }
-
-    @Override
-    public void onApplicationEvent(ImageGalleryApp.StageReadyEvent event) {
-        Stage stage = event.getStage();
-        stage.setTitle("Image Gallery");
-
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/image_gallery_view.fxml"));
-        loader.setControllerFactory(applicationContext::getBean);
-        try {
-            Parent root = loader.load();
-            Scene scene = new Scene(root, 900, 600);
-            stage.setScene(scene);
-            stage.show();
-
-        } catch (IOException e) {
-            throw new RuntimeException("Failed loading FXML file: ", e);
-        }
     }
 
     public void openBigImageView(Mono<Image> imageMono) {
@@ -54,6 +34,7 @@ public class StageInitializer implements ApplicationListener<ImageGalleryApp.Sta
 
             Stage stage = new Stage();
             stage.setTitle("Selected Image View");
+            stage.getIcons().add(ImageGalleryApp.icon);
             stage.setScene(new Scene(root));
             stage.setResizable(false);
             stage.show();

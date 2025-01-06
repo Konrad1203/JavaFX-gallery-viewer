@@ -24,11 +24,11 @@ public enum ThumbnailSize {
         this.imageWidth = imageWidth;
         this.imageHeight = imageHeight;
         this.placeholder = new javafx.scene.image.Image(
-                Objects.requireNonNull(getClass().getResourceAsStream("/GUI/loading.gif")),
+                Objects.requireNonNull(getClass().getResourceAsStream("/GUI/icons/loading.gif")),
                 imageWidth, imageHeight, false, true
         );
         this.errorImage = new javafx.scene.image.Image(
-                Objects.requireNonNull(getClass().getResourceAsStream("/GUI/error.png")),
+                Objects.requireNonNull(getClass().getResourceAsStream("/GUI/icons/error.png")),
                 imageWidth, imageHeight, false, true
         );
     }

@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pl.edu.agh.to.reaktywni.GUI.ImageGalleryPresenter">
+<BorderPane prefHeight="600.0" prefWidth="900.0" stylesheets="/GUI/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pl.edu.agh.to.reaktywni.GUI.ImageGalleryPresenter">
     <top>
         <HBox>
             <VBox prefHeight="74.0" prefWidth="732.0" BorderPane.alignment="CENTER">
@@ -17,13 +17,17 @@
                         <Insets bottom="5.0" />
                     </VBox.margin>
                 </Label>
-                <HBox prefWidth="200.0" spacing="15.0">
+                <HBox prefWidth="200.0" spacing="10.0">
                     <VBox.margin>
                         <Insets />
                     </VBox.margin>
                     <Button mnemonicParsing="false" onAction="#openSelectionWindow" text="Select Images" />
                     <Button mnemonicParsing="false" onAction="#sendAndReceiveImages" text="Send" />
-                    <Button mnemonicParsing="false" onAction="#refreshClientOnServerRestart" text="Refresh" />
+               <Button id="refreshButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#refreshGridOnButton" prefHeight="25.0" prefWidth="25.0" textAlignment="CENTER">
+                  <HBox.margin>
+                     <Insets left="15.0" />
+                  </HBox.margin>
+               </Button>
                 </HBox>
                 <Label fx:id="filesSelectedLabel" text="Wybrano x elementów" visible="false" />
                 <BorderPane.margin>
