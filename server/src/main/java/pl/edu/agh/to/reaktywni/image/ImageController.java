@@ -29,7 +29,7 @@ public class ImageController {
 
     @PostMapping(path="/images", consumes = MediaType.APPLICATION_NDJSON_VALUE, produces = MediaType.APPLICATION_NDJSON_VALUE)
     public Flux<Image> postImages(@RequestBody Flux<Image> images, @RequestParam String size) {
-        if (Stream.of(ThumbnailSize.values()).map(Enum::toString).noneMatch(size::equalsIgnoreCase)) {
+        if (ThumbnailSize.isValidSize(size)) {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
         return imageService.processImages(images, size);
@@ -37,7 +37,7 @@ public class ImageController {
 
     @GetMapping("/thumbnails")
     public Flux<Image> getThumbnails(@RequestParam String size) {
-        if (Stream.of(ThumbnailSize.values()).map(Enum::toString).noneMatch(size::equalsIgnoreCase)) {
+        if (ThumbnailSize.isValidSize(size)) {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
         return imageService.getThumbnails(size);
@@ -45,7 +45,7 @@ public class ImageController {
 
     @GetMapping("/thumbnails/excluding")
     public Flux<Image> getThumbnailsExcludingSet(@RequestParam String size, @RequestParam Set<Integer> ids) {
-        if (Stream.of(ThumbnailSize.values()).map(Enum::toString).noneMatch(size::equalsIgnoreCase)) {
+        if (ThumbnailSize.isValidSize(size)) {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
         return imageService.getThumbnailsExcludingSet(size, ids);
@@ -53,7 +53,7 @@ public class ImageController {
 
     @GetMapping("/thumbnails/count")
     public Mono<Long> getThumbnailsCount(@RequestParam String size) {
-        if (Stream.of(ThumbnailSize.values()).map(Enum::toString).noneMatch(size::equalsIgnoreCase)) {
+        if (ThumbnailSize.isValidSize(size)) {
             return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
         return imageService.getThumbnailsCount(size)

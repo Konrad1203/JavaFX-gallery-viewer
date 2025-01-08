@@ -2,6 +2,8 @@ package pl.edu.agh.to.reaktywni.thumbnail;
 
 import lombok.Getter;
 
+import java.util.stream.Stream;
+
 
 @Getter
 public enum ThumbnailSize {
@@ -18,5 +20,11 @@ public enum ThumbnailSize {
     ThumbnailSize(int width, int height) {
         this.width = width;
         this.height = height;
+    }
+
+    public static boolean isValidSize(String size) {
+        return Stream.of(ThumbnailSize.values())
+                .map(Enum::toString)
+                .anyMatch(size::equalsIgnoreCase);
     }
 }
