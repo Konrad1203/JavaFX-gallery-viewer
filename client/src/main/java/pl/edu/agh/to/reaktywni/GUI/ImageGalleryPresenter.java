@@ -112,14 +112,21 @@ public class ImageGalleryPresenter {
 
     private void downloadAndUpdateThumbnails(Long count) {
         logger.info("Fetching new thumbnails");
-        if (count > imageVBoxes.size()) {
+        if (count < imageVBoxes.size()) {
+            long toBeRemovedCount = imageVBoxes.size() - count;
+            for (int i = 0; i < toBeRemovedCount; i++) {
+                ImageVBox vbox = imageVBoxes.removeLast();
+                emptyImageVBoxes.remove(vbox);
+                Platform.runLater(() -> gridPane.getChildren().remove(vbox));
+            }
+            if (emptyImageVBoxes.isEmpty()) return;
+        } else if (count > imageVBoxes.size()) {
             addStartPlaceholdersToGrid(count - imageVBoxes.size());
         }
         imagePipeline.getThumbnailsExcludingList(thumbnailsSize.toString(), imageIds)
                 .index()
                 .subscribe(
                         image -> {
-                            logger.info("Received image: " + image.getT2());
                             ImageVBox imageVBox = emptyImageVBoxes.get(image.getT1().intValue());
                             replacePlaceholderWithImage(image.getT2(), imageVBox.getGridId());
                         },
@@ -280,6 +287,7 @@ public class ImageGalleryPresenter {
     private void replacePlaceholderWithImage(Image image, int gridId) {
         ImageVBox imageVBox = imageVBoxes.get(gridId);
         if (image.getImageState() == ImageState.SUCCESS) {
+            logger.info("Placed image on position: " + gridId + " | Image: " + image);
             emptyImageVBoxes.remove(imageVBox);
             imageIds.add(image.getId());
         }
