@@ -146,11 +146,8 @@ public class ImageService {
             return;
         }
         logger.info("Creating missing thumbnails");
-        Flux.fromIterable(imageRepository.findAllIds())
+        Flux.fromIterable(imageRepository.findAllIdsWithMissingThumbnails(ThumbnailSize.SIZES_COUNT))
                 .publishOn(Schedulers.boundedElastic())
-                .map(Long::intValue)
-                .filter(id -> thumbnailRepository.countByImageId(id) != ThumbnailSize.SIZES_COUNT)
-                .map(this::createEmptyImageWithId)
                 .doOnNext(this::saveMissingThumbnails)
                 .blockLast();
     }
@@ -161,19 +158,14 @@ public class ImageService {
         return image;
     }
 
-    private void saveMissingThumbnails(Image image) {
-        if (thumbnailRepository.countByImageId(image.getId()) == ThumbnailSize.SIZES_COUNT) {
-            return;
-        }
-        List<ThumbnailSize> existingSizes = thumbnailRepository.findByImageId(image.getId()).stream()
+    private void saveMissingThumbnails(int imageId) {
+        List<ThumbnailSize> existingSizes = thumbnailRepository.findByImageId(imageId).stream()
                 .map(Thumbnail::getSize)
                 .toList();
-
         List<Thumbnail> missingThumbnails = Arrays.stream(ThumbnailSize.values())
                 .filter(size -> !existingSizes.contains(size))
-                .map(size -> new Thumbnail(image, size))
+                .map(size -> new Thumbnail(createEmptyImageWithId(imageId), size))
                 .toList();
-
         thumbnailRepository.saveAll(missingThumbnails);
     }
 

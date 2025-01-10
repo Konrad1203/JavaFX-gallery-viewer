@@ -9,7 +9,9 @@ import java.util.logging.Logger;
 
 @Component
 public class ThumbnailReprocess {
+
     private final static Logger logger = Logger.getLogger(ThumbnailReprocess.class.getName());
+
     private final ImageService imageService;
 
     public ThumbnailReprocess(ImageService imageService) {
