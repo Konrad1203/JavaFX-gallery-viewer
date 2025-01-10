@@ -9,6 +9,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -39,6 +40,7 @@ public class ImageGalleryPresenter {
     @FXML private Label filesSelectedLabel;
     @FXML private Slider sizeSlider;
     @FXML private GridPane gridPane;
+    private Stage selectionStage;
 
     private List<File> selectedFiles;
     private ThumbnailSize thumbnailsSize;
@@ -196,6 +198,13 @@ public class ImageGalleryPresenter {
 
     @FXML
     private void openSelectionWindow() {
+        if (selectionStage == null) {
+            selectionStage = stageInitializer.initializeFilesSelectionStage(this::openImagesSelectionWindow, this::openZipSelectionWindow);
+        }
+        selectionStage.show();
+    }
+
+    private void openImagesSelectionWindow() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select images");
         fileChooser.getExtensionFilters().add(
@@ -206,6 +215,22 @@ public class ImageGalleryPresenter {
             filesSelectedLabel.setText("Selected " + selectedFiles.size() + " files");
             filesSelectedLabel.setVisible(true);
         }
+        selectionStage.hide();
+    }
+
+    private void openZipSelectionWindow() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select zip file");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Zip Files", "*.zip")
+        );
+        File file = fileChooser.showOpenDialog(null);
+        selectedFiles = file != null ? List.of(file) : null;
+        if (file != null) {
+            filesSelectedLabel.setText("Selected zip file");
+            filesSelectedLabel.setVisible(true);
+        }
+        selectionStage.hide();
     }
 
     @FXML

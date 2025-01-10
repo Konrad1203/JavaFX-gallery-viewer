@@ -4,6 +4,8 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -53,6 +55,28 @@ public class StageInitializer {
         } catch (IOException e) {
             throw new RuntimeException("Failed loading FXML file: ", e);
         }
+    }
+
+    @FunctionalInterface
+    public interface WindowOpener {
+        void open();
+    }
+
+    public Stage initializeFilesSelectionStage(WindowOpener button1Function, WindowOpener button2Function) {
+        Stage stage = new Stage();
+        stage.setResizable(false);
+        VBox root = new VBox();
+        Scene scene = new Scene(root, 200, 160);
+        root.setAlignment(javafx.geometry.Pos.CENTER);
+        root.setSpacing(20);
+        Button button1 = new Button("Select images");
+        button1.setOnAction(event -> button1Function.open());
+        Button button2 = new Button("Select zip file");
+        button2.setOnAction(event -> button2Function.open());
+        root.getChildren().add(button1);
+        root.getChildren().add(button2);
+        stage.setScene(scene);
+        return stage;
     }
 }
 
