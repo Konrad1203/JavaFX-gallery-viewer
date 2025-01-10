@@ -25,11 +25,6 @@ public class Image {
 
     @Setter private byte[] data;
 
-
-    public static ImageBuilder getBuilder() {
-        return new ImageBuilder();
-    }
-
     @Override
     public String toString() {
         return "Image{" +

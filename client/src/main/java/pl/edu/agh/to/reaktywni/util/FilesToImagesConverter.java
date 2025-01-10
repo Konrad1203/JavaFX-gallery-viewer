@@ -25,7 +25,7 @@ public interface FilesToImagesConverter {
         String extensionType = getFileExtension(file.getName());
         int[] size = getImageDimensions(file, extensionType);
 
-        return Image.getBuilder()
+        return Image.builder()
                 .name(file.getName())
                 .extensionType(extensionType)
                 .width(size[0])
@@ -34,7 +34,7 @@ public interface FilesToImagesConverter {
                 .build();
     }
 
-    private static String getFileExtension(String fileName) {
+    static String getFileExtension(String fileName) {
         int dotIndex = fileName.lastIndexOf(".");
         if (dotIndex <= 0) throw new IllegalArgumentException("No extension for file: " + fileName);
         return fileName.substring(dotIndex + 1);
