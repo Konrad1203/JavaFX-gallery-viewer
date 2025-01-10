@@ -1,8 +1,6 @@
 package pl.edu.agh.to.reaktywni.model;
 
-import lombok.Setter;
 import org.springframework.stereotype.Component;
-import pl.edu.agh.to.reaktywni.GUI.ImageGalleryPresenter;
 import pl.edu.agh.to.reaktywni.ServerClient;
 import pl.edu.agh.to.reaktywni.util.Base64ImageDataCodec;
 import reactor.core.publisher.Flux;
@@ -19,34 +17,38 @@ public class ImagePipeline {
 
     private final ServerClient serverClient;
 
-    @Setter
-    private ImageGalleryPresenter presenter;
-
     public ImagePipeline(ServerClient serverClient) {
         this.serverClient = serverClient;
     }
 
-    public void sendAndReceiveImages(List<Image> images) {
+    public Flux<Image> sendAndReceiveImages(List<Image> images, String thumbnailSize) {
         logger.info("Sending images: " + images.size());
 
-        Flux<Image> receivedImages = serverClient.sendImages(Flux.fromIterable(images)
-                .doOnNext(Base64ImageDataCodec::encode));
+        Flux<Image> receivedImages = serverClient.sendImages(
+                Flux.fromIterable(images).doOnNext(Base64ImageDataCodec::encode),
+                thumbnailSize
+        );
 
-        receivedImages
-                .doOnNext(Base64ImageDataCodec::decode)
-                .doOnNext(image -> presenter.replacePlaceholderWithImage(image, image.getGridPlacementId()))
-                .blockLast();
+        return receivedImages.doOnNext(Base64ImageDataCodec::decode)
+                .doOnNext(this::logImageInfo);
     }
 
-    public Flux<Image> getThumbnails() {
-        return serverClient.getThumbnails()
-                .doOnNext(Base64ImageDataCodec::decode)
-                .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsError: " + e.getMessage()));
-
+    private void logImageInfo(Image image) {
+        logger.info("Received: " + image);
     }
 
-    public Mono<Long> getThumbnailsCount() {
-        return serverClient.getThumbnailsCount();
+    public Flux<Image> getThumbnails(String thumbnailSize) {
+        return serverClient.getThumbnails(thumbnailSize)
+                .doOnNext(Base64ImageDataCodec::decode);
+    }
+
+    public Flux<Image> getThumbnailsExcludingList(String thumbnailSize, List<Integer> ids) {
+        return serverClient.getThumbnailsExcludingSet(thumbnailSize, ids)
+                .doOnNext(Base64ImageDataCodec::decode);
+    }
+
+    public Mono<Long> getThumbnailsCount(String thumbnailSize) {
+        return serverClient.getThumbnailsCount(thumbnailSize);
     }
 
     public Mono<Image> getFullImage(int id) {

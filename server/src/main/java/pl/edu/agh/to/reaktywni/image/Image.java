@@ -5,37 +5,46 @@ import lombok.*;
 
 
 @Getter
-@Entity
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
 public class Image {
 
-    @Setter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int databaseId;
+    private int id;
 
     @Transient
-    private int gridPlacementId;
+    private int gridId;
 
-    @Setter
     @Transient
-    private ImageState imageState;
+    @Builder.Default
+    private ImageState imageState = ImageState.PENDING;
 
-    @Setter
     private String name;
 
-    @Setter
     private String extensionType;
 
-    @Setter
     private int width;
 
-    @Setter
     private int height;
 
-    @Setter
     @Lob
     private byte[] data;
+
+    @Override
+    public String toString() {
+        return "Image{" +
+                "id=" + id +
+                ", gridId=" + gridId +
+                ", imageState=" + imageState +
+                ", name='" + name + '\'' +
+                ", extensionType='" + extensionType + '\'' +
+                ", width=" + width +
+                ", height=" + height +
+                ", data_len=" + data.length +
+                '}';
+    }
 }

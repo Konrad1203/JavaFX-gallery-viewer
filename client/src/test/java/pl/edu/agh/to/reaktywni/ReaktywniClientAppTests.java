@@ -46,7 +46,7 @@ class ReaktywniClientAppTests {
 		String extensionType = getFileExtension(file.getName());
 		int[] size = getImageDimensions(file, extensionType);
 		return Image.builder()
-				.gridPlacementId(id)
+				.gridId(id)
 				.name(file.getName())
 				.extensionType(extensionType)
 				.width(size[0])
@@ -80,6 +80,7 @@ class ReaktywniClientAppTests {
 	void setUp() {
 		when(webClientBuilder.baseUrl(anyString())).thenReturn(webClientBuilder);
 		when(webClientBuilder.build()).thenReturn(webClient);
+
 		serverClient = new ServerClient(webClientBuilder);
 	}
 
@@ -91,7 +92,7 @@ class ReaktywniClientAppTests {
 		);
 
 		when(webClient.post()).thenReturn(requestBodyUriSpec);
-		when(requestBodyUriSpec.uri(anyString())).thenReturn(requestBodyUriSpec);
+		when(requestBodyUriSpec.uri(eq("/images?size={size}"), eq(new Object[]{"MEDIUM"}))).thenReturn(requestBodyUriSpec);
 		when(requestBodyUriSpec.contentType(eq(MediaType.APPLICATION_NDJSON))).thenReturn(requestBodyUriSpec);
 		doAnswer(invocation -> requestBodyUriSpec).when(requestBodyUriSpec).body(any(), eq(Image.class));
 		when(requestBodyUriSpec.retrieve()).thenReturn(responseSpec);
@@ -100,7 +101,7 @@ class ReaktywniClientAppTests {
 				loadImage("test-png.png", 1)
 		));
 
-		Flux<Image> result = serverClient.sendImages(images);
+		Flux<Image> result = serverClient.sendImages(images, "MEDIUM");
 
 		StepVerifier.create(result)
 				.expectNextMatches(image -> image.getName().equals("test-pepe.jpg"))

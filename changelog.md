@@ -98,3 +98,48 @@ Technologies
 <p align="center">
     <img src="md-images/diagram3.png" alt="class diagram 3">
 </p>
+
+
+## 3.01.2025 - Second Milestone
+
+### Client
+- Changed UI language to english
+- Added thumbnails size slider with 3 sizes
+- sendAndReceiveImages() method in ImagePipeline now returns Flux<Images> rather than using presenter
+- ImageGalleryPresenter changes:
+    - Added enum ThumbnailSize with 3 sizes to packet "util"
+    - Added scheduled fetching of new thumbnails
+    - Extracted class ImageVBox to packet "util"
+    - Added thumbnailSize and size slider initialization
+    - Added refreshing grid logic with thumbnails of new size
+    - Refactored downloadAndPlaceThumbnails() to use new ImageVBox
+    - Refactored replacePlaceholderWithImage to use new ImageVBox
+- Refactored methods in ImagePipeline and ServerConnector to work with different thumbnail sizes
+
+### Server
+- Added new ImageState: PENDING
+- Set new Image imageStatus to PENDING
+- Thumbnail changes:
+    - Added new attributes: (size) type and ImageState state 
+    - Changed constructor to include type and exclude data 
+    - Added new methods: setData() and setFailure()
+- Added new config class StartupConfig to create thumbnails if not present
+    - method createEmptyThumbnailsIfMissing() save empty thumbnails in database if not present
+    - method reprocessPendingThumbnails() reprocess thumbnail creation for pending and failed thumbnails
+- Added handling different thumbnail sizes in ImageController, ImageService and ThumbnailRepository
+- ImageMetaData is now a record instead of a interface
+- ImageService
+    - Transformed blocking database calls to be handled in "Mono.fromCallable" on different thread
+    - Added new method getThumbnailsExcludingSet() to send only thumbnails that are new to client
+    - Changed processImage() to calculate thumbnails for all sizes. Thumbnails in the size of other than required are processed on other thread.
+    - Before processing new thumbnails, server save empty thumbnails in database and then process them and update
+- Thumbnail table in database has now new indexes to speed up fetching thumbnails
+- Changed imageId in Thumbnail to be a foreign key to Image table
+- Added enum ThumbnailSize with 3 sizes
+- Resizer create thumbnail rather than editing image data
+- Fixed tests to work with new features
+
+### Class diagram
+<p align="center">
+    <img src="md-images/diagram4.png" alt="class diagram 4">
+</p>

@@ -21,12 +21,12 @@ public class BigImagePresenter {
     private Label sizeLabel;
 
     private static final Image loadingDots = new Image(
-            Objects.requireNonNull(BigImagePresenter.class.getResourceAsStream("/GUI/loading.gif")),
+            Objects.requireNonNull(BigImagePresenter.class.getResourceAsStream("/GUI/icons/loading.gif")),
             620, 349, true, true
     );
 
     private static final javafx.scene.image.Image errorImage = new javafx.scene.image.Image(
-            Objects.requireNonNull(ImageGalleryPresenter.class.getResourceAsStream("/GUI/error.png")),
+            Objects.requireNonNull(ImageGalleryPresenter.class.getResourceAsStream("/GUI/icons/error.png")),
             620, 349, true, true
     );
 

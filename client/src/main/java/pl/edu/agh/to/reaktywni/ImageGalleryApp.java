@@ -6,14 +6,19 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ConfigurableApplicationContext;
+import pl.edu.agh.to.reaktywni.GUI.StageInitializer;
+
+import java.util.Objects;
 
 
 public class ImageGalleryApp extends Application {
 
     private ConfigurableApplicationContext applicationContext;
+
+    public static final Image icon = new Image(Objects.requireNonNull(StageInitializer.class.getResourceAsStream("/GUI/icons/gallery.png")));
 
     @Override
     public void init() {
@@ -25,6 +30,8 @@ public class ImageGalleryApp extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/GUI/image_gallery_view.fxml"));
         loader.setControllerFactory(applicationContext::getBean);
         Parent root = loader.load();
+        stage.setTitle("Image Gallery");
+        stage.getIcons().add(icon);
         stage.setScene(new Scene(root));
         stage.show();
     }
@@ -33,16 +40,5 @@ public class ImageGalleryApp extends Application {
     public void stop() {
         applicationContext.close();
         Platform.exit();
-    }
-
-    public static class StageReadyEvent extends ApplicationEvent {
-
-        public StageReadyEvent(Stage stage) {
-            super(stage);
-        }
-
-        public Stage getStage() {
-            return (Stage) getSource();
-        }
     }
 }

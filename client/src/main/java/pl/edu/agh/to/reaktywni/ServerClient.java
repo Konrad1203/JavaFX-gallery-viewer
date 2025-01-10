@@ -7,6 +7,8 @@ import pl.edu.agh.to.reaktywni.model.Image;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -26,33 +28,45 @@ public class ServerClient {
             .uri("/images/{id}", id)
             .retrieve()
             .bodyToMono(Image.class)
-            .doOnError(e -> logger.warning("getFullImageError: " + e.getMessage()));
+            .doOnError(e -> logger.log(Level.SEVERE, "getFullImageError: " + e.getMessage()));
     }
 
-    public Flux<Image> sendImages(Flux<Image> images) {
+    public Flux<Image> sendImages(Flux<Image> images, String thumbnailSize) {
         return webClient.post()
-                .uri("/images")
+                .uri("/images?size={size}", thumbnailSize)
                 .contentType(MediaType.APPLICATION_NDJSON)
                 .body(images, Image.class)
                 .retrieve()
                 .bodyToFlux(Image.class)
-                .doOnError(e -> logger.warning("sendImagesError: " + e.getMessage()));
+                .doOnError(e -> logger.log(Level.SEVERE, "sendImagesError: " + e.getMessage()));
     }
 
-    public Flux<Image> getThumbnails() {
+    public Flux<Image> getThumbnails(String thumbnailSize) {
         return webClient.get()
-                .uri("/images/thumbnails")
+                .uri("/thumbnails?size={size}", thumbnailSize)
                 .retrieve()
                 .bodyToFlux(Image.class)
-                .doOnError(e -> logger.warning("getThumbnailsError: " + e.getMessage()));
+                .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsError: " + e.getMessage()));
     }
 
-    public Mono<Long> getThumbnailsCount() {
+    public Flux<Image> getThumbnailsExcludingSet(String thumbnailSize, List<Integer> ids) {
         return webClient.get()
-                .uri("/images/thumbnails/count")
+                .uri("/thumbnails/excluding?size={size}&ids={ids}", thumbnailSize, convertListToString(ids))
+                .retrieve()
+                .bodyToFlux(Image.class)
+                .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsExcludingListError: " + e.getMessage()));
+    }
+
+    private String convertListToString(List<Integer> ids) {
+        return String.join(",", ids.stream().map(String::valueOf).toList());
+    }
+
+    public Mono<Long> getThumbnailsCount(String thumbnailSize) {
+        return webClient.get()
+                .uri("/thumbnails/count?size={size}", thumbnailSize)
                 .retrieve()
                 .bodyToMono(Long.class)
-                .doOnError(e -> logger.warning("getThumbnailsCountError: " + e.getMessage()));
+                .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsCountError: " + e.getMessage()));
     }
 }
 

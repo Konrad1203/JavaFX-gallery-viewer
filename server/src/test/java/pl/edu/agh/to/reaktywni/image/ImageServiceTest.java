@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
-import pl.edu.agh.to.reaktywni.util.Resizer;
+import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailSize;
 import reactor.core.publisher.Flux;
 
 import javax.imageio.ImageIO;
@@ -15,6 +15,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.List;
+import java.util.Optional;
 
 import reactor.test.StepVerifier;
 
@@ -33,12 +35,9 @@ public class ImageServiceTest {
     @Autowired
     private ImageRepository imageRepository;
 
-    @Autowired
-    private Resizer imageResizer;
-
     private static Image getTestImage(int width, int height, int size) {
         return Image.builder()
-                .gridPlacementId(1)
+                .gridId(1)
                 .name("test-image")
                 .extensionType("jpg")
                 .width(width)
@@ -73,7 +72,7 @@ public class ImageServiceTest {
         Image image = getExistingImage(byteArrayOutputStream, originalImage);
         imageRepository.save(image);
 
-        Flux<Image> processedImages = imageService.processImages(Flux.just(image));
+        Flux<Image> processedImages = imageService.processImages(Flux.just(image), "MEDIUM");
 
         StepVerifier.create(processedImages)
                 .expectNextMatches(i -> {
@@ -88,35 +87,51 @@ public class ImageServiceTest {
 
     @Test
     public void testGetThumbnails() {
-        Thumbnail thumbnail = new Thumbnail(1, 320, 180, new byte[50]);
-        thumbnailRepository.save(thumbnail);
+        thumbnailRepository.deleteAll();
+        imageRepository.deleteAll();
 
+        ThumbnailSize size = ThumbnailSize.MEDIUM;
         Image image = getTestImage(500, 300, 100);
         imageRepository.save(image);
 
-        Flux<Image> thumbnails = imageService.getThumbnails();
+        Thumbnail thumbnail = new Thumbnail(image, size);
+        thumbnail.setData(new byte[50]);
+        thumbnailRepository.save(thumbnail);
+
+        Flux<Image> thumbnails = imageService.getThumbnails(String.valueOf(size));
 
         StepVerifier.create(thumbnails)
                 .expectNextMatches(t -> {
-                    assertEquals(320, t.getWidth());
-                    assertEquals(180, t.getHeight());
+                    assertEquals(size.getWidth(), t.getWidth());
+                    assertEquals(size.getHeight(), t.getHeight());
                     return true;
                 })
                 .verifyComplete();
     }
 
     @Test
-    public void getImagesCountTest() {
-        Image image1 = getTestImage(500, 300, 100);
-        Image image2 = getTestImage(500, 300, 100);
-        Image image3 = getTestImage(500, 300, 100);
+    public void getThumbnailsCountTest() {
+        Image image = imageRepository.save(getTestImage(500, 300, 100));
 
-        imageRepository.save(image1);
-        imageRepository.save(image2);
-        imageRepository.save(image3);
+        List<Thumbnail> thumbnails = List.of(
+                new Thumbnail(image, ThumbnailSize.SMALL),
+                new Thumbnail(image, ThumbnailSize.SMALL),
+                new Thumbnail(image, ThumbnailSize.MEDIUM),
+                new Thumbnail(image, ThumbnailSize.LARGE),
+                new Thumbnail(image, ThumbnailSize.LARGE),
+                new Thumbnail(image, ThumbnailSize.LARGE)
+        );
+        thumbnailRepository.saveAll(thumbnails);
 
-        long count = imageService.getImagesCount();
+        Optional<Long> smallCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.SMALL)).blockOptional();
+        if (smallCount.isEmpty()) fail("smallCount is empty");
+        Optional<Long> mediumCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.MEDIUM)).blockOptional();
+        if (mediumCount.isEmpty()) fail("mediumCount is empty");
+        Optional<Long> largeCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.LARGE)).blockOptional();
+        if (largeCount.isEmpty()) fail("largeCount is empty");
 
-        assertEquals(3L, count);
+        assertEquals(2L, smallCount.get());
+        assertEquals(1L, mediumCount.get());
+        assertEquals(3L, largeCount.get());
     }
 }

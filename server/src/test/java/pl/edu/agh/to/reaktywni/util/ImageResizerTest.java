@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import pl.edu.agh.to.reaktywni.image.Image;
 import pl.edu.agh.to.reaktywni.image.ImageState;
+import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
+import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailSize;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -18,7 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest
 public class ImageResizerTest {
 
-    private static Image getResizedImage(ByteArrayOutputStream byteArrayOutputStream, BufferedImage originalImage) {
+    private static final ThumbnailSize size = ThumbnailSize.LARGE;
+
+    private static Thumbnail getResizedImage(ByteArrayOutputStream byteArrayOutputStream, BufferedImage originalImage) {
         byte[] imageData = byteArrayOutputStream.toByteArray();
 
         Image realImage = Image.builder()
@@ -31,11 +35,11 @@ public class ImageResizerTest {
 
         ImageResizer resizer = new ImageResizer();
 
-        return resizer.resize(realImage, 100, 100);
+        return resizer.createThumbnail(realImage, size);
     }
 
     @Test
-    void testResizeWithRealImage() throws IOException {
+    void testCreateThumbnailWithRealImage() throws IOException {
         File imageFile = new File("src/test/resources/test-tiger.jpg");
         if (!imageFile.exists()) {
             throw new IOException("Image doesn't exist at path: " + imageFile.getAbsolutePath());
@@ -45,12 +49,11 @@ public class ImageResizerTest {
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ImageIO.write(originalImage, "jpg", byteArrayOutputStream);
-        Image resizedImage = getResizedImage(byteArrayOutputStream, originalImage);
+        Thumbnail resizedImage = getResizedImage(byteArrayOutputStream, originalImage);
 
         assertNotNull(resizedImage);
-        assertEquals(100, resizedImage.getWidth());
-        assertEquals(100, resizedImage.getHeight());
-        assertEquals(ImageState.SUCCESS, resizedImage.getImageState());
+        assertEquals(size, resizedImage.getSize());
+        assertEquals(ImageState.SUCCESS, resizedImage.getState());
         assertNotNull(resizedImage.getData());
     }
 }

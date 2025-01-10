@@ -15,21 +15,17 @@ import java.util.List;
 
 public interface FilesToImagesConverter {
 
-    static List<Image> convertWithPositionsCounting(List<File> files, int gridPlacementCounter) throws IOException {
+    static List<Image> convert(List<File> files) throws IOException {
         List<Image> images = new ArrayList<>();
-        for (File file : files) {
-            images.add(createFromFile(gridPlacementCounter, file));
-            gridPlacementCounter++;
-        }
+        for (File file : files) images.add(createFromFile(file));
         return images;
     }
 
-    static Image createFromFile(int gridPlacementId, File file) throws IOException {
+    static Image createFromFile(File file) throws IOException {
         String extensionType = getFileExtension(file.getName());
         int[] size = getImageDimensions(file, extensionType);
 
         return Image.getBuilder()
-                .gridPlacementId(gridPlacementId)
                 .name(file.getName())
                 .extensionType(extensionType)
                 .width(size[0])
