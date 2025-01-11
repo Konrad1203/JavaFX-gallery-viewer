@@ -2,9 +2,7 @@ package pl.edu.agh.to.reaktywni.GUI;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
+import javafx.scene.control.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
@@ -26,6 +24,7 @@ import pl.edu.agh.to.reaktywni.model.ImageState;
 import pl.edu.agh.to.reaktywni.util.FilesToImagesConverter;
 import pl.edu.agh.to.reaktywni.model.Image;
 import pl.edu.agh.to.reaktywni.model.ImagePipeline;
+import pl.edu.agh.to.reaktywni.util.ZipDataExtractor;
 import reactor.core.scheduler.Schedulers;
 
 
@@ -39,6 +38,7 @@ public class ImageGalleryPresenter {
 
     @FXML private Label filesSelectedLabel;
     @FXML private Slider sizeSlider;
+    @FXML private TreeView<String> dirSelectionView;
     @FXML private GridPane gridPane;
     private Stage selectionStage;
 
@@ -60,6 +60,7 @@ public class ImageGalleryPresenter {
     public void initialize() {
         thumbnailsSize = ThumbnailSize.getFromId((int) sizeSlider.getValue());
         initializeSizeSlider();
+        initializeTreeView();
         imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
                 .subscribe(this::initializeThumbnailsOnStart, this::showInitializationError);
     }
@@ -77,6 +78,21 @@ public class ImageGalleryPresenter {
         });
         sizeSlider.setOnMouseReleased(event -> updateThumbnailSize());
         sizeSlider.setOnKeyPressed(event -> updateThumbnailSize());
+    }
+
+    private void initializeTreeView() {
+        dirSelectionView.setOnMouseClicked(mouseEvent -> {
+            if (mouseEvent.getClickCount() == 1) {
+                TreeItem<String> selectedItem = dirSelectionView.getSelectionModel().getSelectedItem();
+                List<String> path = new ArrayList<>();
+                if (!"Root".equals(selectedItem.getValue())) path.add(selectedItem.getValue());
+                while (selectedItem.getParent() != null && !"Root".equals(selectedItem.getParent().getValue())) {
+                    selectedItem = selectedItem.getParent();
+                    path.add(selectedItem.getValue());
+                }
+                System.out.println("Selected item: " + String.join("/", path.reversed()) + '/');
+            }
+        });
     }
 
     private void initializeThumbnailsOnStart(Long count) {
@@ -229,8 +245,39 @@ public class ImageGalleryPresenter {
         if (file != null) {
             filesSelectedLabel.setText("Selected zip file");
             filesSelectedLabel.setVisible(true);
+            try {
+                ZipDataExtractor.ZipData zipData = ZipDataExtractor.extractZipData(file);
+                addDirectoryToTreeView(zipData.directory());
+            } catch (IOException e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Zip file processing error");
+                alert.setHeaderText("Failed to process zip file");
+                alert.setContentText("Check if the selected file is a zip archive");
+                alert.showAndWait();
+            }
         }
         selectionStage.hide();
+    }
+
+    private void addDirectoryToTreeView(ZipDataExtractor.Directory directory) {
+        for (ZipDataExtractor.Directory subDir : directory.subdirectories())
+            addDirectoryToTreeView(dirSelectionView.getRoot(), subDir);
+    }
+
+    private void addDirectoryToTreeView(TreeItem<String> root, ZipDataExtractor.Directory directory) {
+        TreeItem<String> foundItem = null;
+        for (TreeItem<String> treeItem : root.getChildren()) {
+            if (treeItem.getValue().equals(directory.name())) { foundItem = treeItem; break; }
+        }
+        if (foundItem == null) {
+            TreeItem<String> item = new TreeItem<>(directory.name());
+            item.setExpanded(true);
+            root.getChildren().add(item);
+        } else {
+            for (ZipDataExtractor.Directory subDir : directory.subdirectories()) {
+                addDirectoryToTreeView(foundItem, subDir);
+            }
+        }
     }
 
     @FXML

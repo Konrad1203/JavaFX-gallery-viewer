@@ -70,8 +70,10 @@ public class StageInitializer {
         root.setAlignment(javafx.geometry.Pos.CENTER);
         root.setSpacing(20);
         Button button1 = new Button("Select images");
+        button1.setPrefSize(120, 40);
         button1.setOnAction(event -> button1Function.open());
         Button button2 = new Button("Select zip file");
+        button2.setPrefSize(120, 40);
         button2.setOnAction(event -> button2Function.open());
         root.getChildren().add(button1);
         root.getChildren().add(button2);
