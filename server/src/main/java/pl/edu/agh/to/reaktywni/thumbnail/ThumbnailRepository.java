@@ -14,7 +14,7 @@ public interface ThumbnailRepository extends JpaRepository<Thumbnail, Integer> {
     List<Thumbnail> getThumbnailsBySize(ThumbnailSize size);
 
     @Query("SELECT t FROM Thumbnail t WHERE t.size = :size AND t.image.id NOT IN :ids")
-    List<Thumbnail> getThumbnailsBySizeExcludingSet(ThumbnailSize size, List<Integer> ids);
+    List<Thumbnail> getThumbnailsBySizeExcludingList(ThumbnailSize size, List<Integer> ids);
 
     long countBySize(ThumbnailSize size);
 

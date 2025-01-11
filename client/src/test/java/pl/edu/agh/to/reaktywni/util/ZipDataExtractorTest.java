@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class ZipDataExtractorTest {
 
-    File zipFile = new File("C:\\Users\\konte\\Desktop\\photos.zip");
+    File zipFile = new File("C:/Users/<username>/Desktop/photos.zip");
 
     @Test
     public void testExtractZipData() {

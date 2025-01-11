@@ -10,8 +10,8 @@ import pl.edu.agh.to.reaktywni.image.Image;
 import pl.edu.agh.to.reaktywni.image.ImageService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import java.util.List;
 
-import java.util.Set;
 
 @RestController
 @RequestMapping("/thumbnails")
@@ -32,11 +32,11 @@ public class ThumbnailController {
     }
 
     @GetMapping("/excluding")
-    public Flux<Image> getThumbnailsExcludingSet(@RequestParam String size, @RequestParam Set<Integer> ids) {
+    public Flux<Image> getThumbnailsExcludingList(@RequestParam String size, @RequestParam List<Integer> ids) {
         if (!ThumbnailSize.isValidSize(size)) {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
-        return imageService.getThumbnailsExcludingSet(size, ids);
+        return imageService.getThumbnailsExcludingList(size, ids);
     }
 
     @GetMapping("/count")

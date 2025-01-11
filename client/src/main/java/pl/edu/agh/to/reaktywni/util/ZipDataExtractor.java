@@ -23,18 +23,32 @@ public interface ZipDataExtractor {
     record Directory(String name, List<Directory> subdirectories) {
 
         public void addSubdirectory(String path) {
+            List<Directory> currentSubDirs = this.subdirectories;
             for (String directoryName : path.split("/")) {
                 if (directoryName.isBlank()) continue;
-                Directory newDir = new Directory(directoryName, new ArrayList<>());
-                if (!subdirectories.contains(newDir)) {
-                    subdirectories.add(newDir);
-                }
+                Optional<Directory> existingDir = findDirectoryWithName(currentSubDirs, directoryName);
+                if (existingDir.isEmpty()) currentSubDirs.add(new Directory(directoryName, new ArrayList<>(0)));
+                else currentSubDirs = existingDir.get().subdirectories;
             }
+        }
+
+        private Optional<Directory> findDirectoryWithName(List<Directory> directories, String name) {
+            for (Directory directory : directories) {
+                if (directory.name.equals(name))
+                    return Optional.of(directory);
+            }
+            return Optional.empty();
+        }
+
+        private void sortSubdirectories() {
+            subdirectories.sort(Comparator.comparing(Directory::name));
+            if (!subdirectories.isEmpty()) subdirectories.forEach(Directory::sortSubdirectories);
         }
 
         @Override
         public String toString() {
-            return "{name=" + name + " " + subdirectories +"}";
+            if (subdirectories.isEmpty()) return name;
+            else return name + ": " + subdirectories;
         }
     }
 
@@ -62,6 +76,7 @@ public interface ZipDataExtractor {
                 }
             }
         }
+        root.sortSubdirectories();
         return new ZipData(root, images);
     }
 
