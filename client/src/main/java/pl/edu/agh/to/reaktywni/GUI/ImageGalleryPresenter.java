@@ -215,7 +215,8 @@ public class ImageGalleryPresenter {
     @FXML
     private void openSelectionWindow() {
         if (selectionStage == null) {
-            selectionStage = stageInitializer.initializeFilesSelectionStage(this::openImagesSelectionWindow, this::openZipSelectionWindow);
+            selectionStage = stageInitializer.initializeFilesSelectionStage(
+                    this::openImagesSelectionWindow, this::openZipSelectionWindow);
         }
         selectionStage.show();
     }
@@ -249,6 +250,7 @@ public class ImageGalleryPresenter {
                 ZipDataExtractor.ZipData zipData = ZipDataExtractor.extractZipData(file);
                 addDirectoryToTreeView(zipData.directory());
             } catch (IOException e) {
+                logger.warning("Zip file processing error: " + e.getMessage());
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Zip file processing error");
                 alert.setHeaderText("Failed to process zip file");
@@ -273,10 +275,10 @@ public class ImageGalleryPresenter {
             TreeItem<String> item = new TreeItem<>(directory.name());
             item.setExpanded(true);
             root.getChildren().add(item);
-        } else {
-            for (ZipDataExtractor.Directory subDir : directory.subdirectories()) {
-                addDirectoryToTreeView(foundItem, subDir);
-            }
+            foundItem = item;
+        }
+        for (ZipDataExtractor.Directory subDir : directory.subdirectories()) {
+            addDirectoryToTreeView(foundItem, subDir);
         }
     }
 
