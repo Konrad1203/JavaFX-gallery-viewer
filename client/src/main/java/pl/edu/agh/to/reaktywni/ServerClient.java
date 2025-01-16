@@ -41,17 +41,17 @@ public class ServerClient {
                 .doOnError(e -> logger.log(Level.SEVERE, "sendImagesError: " + e.getMessage()));
     }
 
-    public Flux<Image> getThumbnails(String thumbnailSize) {
+    public Flux<Image> getThumbnails(String thumbnailSize, int page, int pageSize) {
         return webClient.get()
-                .uri("/thumbnails?size={size}", thumbnailSize)
+                .uri("/thumbnails?size={size}&page={page}&pageSize={pageSize}", thumbnailSize, page, pageSize)
                 .retrieve()
                 .bodyToFlux(Image.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsError: " + e.getMessage()));
     }
 
-    public Flux<Image> getThumbnailsExcludingSet(String thumbnailSize, List<Integer> ids) {
+    public Flux<Image> getThumbnailsExcludingSet(String thumbnailSize, List<Integer> ids, int elemCount) {
         return webClient.get()
-                .uri("/thumbnails/excluding?size={size}&ids={ids}", thumbnailSize, convertListToString(ids))
+                .uri("/thumbnails/excluding?size={size}&ids={ids}&elemCount={elemCount}", thumbnailSize, convertListToString(ids), elemCount)
                 .retrieve()
                 .bodyToFlux(Image.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsExcludingListError: " + e.getMessage()));

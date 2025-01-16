@@ -1,5 +1,6 @@
 package pl.edu.agh.to.reaktywni.thumbnail;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,19 +25,19 @@ public class ThumbnailController {
     }
 
     @GetMapping()
-    public Flux<Image> getThumbnails(@RequestParam String size) {
+    public Flux<Image> getThumbnails(@RequestParam String size, @RequestParam int page, @RequestParam int pageSize) {
         if (!ThumbnailSize.isValidSize(size)) {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
-        return imageService.getThumbnails(size);
+        return imageService.getThumbnails(size, PageRequest.of(page, pageSize));
     }
 
     @GetMapping("/excluding")
-    public Flux<Image> getThumbnailsExcludingList(@RequestParam String size, @RequestParam List<Integer> ids) {
+    public Flux<Image> getThumbnailsExcludingList(@RequestParam String size, @RequestParam List<Integer> ids, @RequestParam int elemCount) {
         if (!ThumbnailSize.isValidSize(size)) {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
-        return imageService.getThumbnailsExcludingList(size, ids);
+        return imageService.getThumbnailsExcludingList(size, ids, elemCount);
     }
 
     @GetMapping("/count")

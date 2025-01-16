@@ -37,13 +37,13 @@ public class ImagePipeline {
         logger.info("Received: " + image);
     }
 
-    public Flux<Image> getThumbnails(String thumbnailSize) {
-        return serverClient.getThumbnails(thumbnailSize)
+    public Flux<Image> getThumbnails(String thumbnailSize, int page, int pageSize) {
+        return serverClient.getThumbnails(thumbnailSize, page, pageSize)
                 .doOnNext(Base64ImageDataCodec::decode);
     }
 
-    public Flux<Image> getThumbnailsExcludingList(String thumbnailSize, List<Integer> ids) {
-        return serverClient.getThumbnailsExcludingSet(thumbnailSize, ids)
+    public Flux<Image> getThumbnailsExcludingList(String thumbnailSize, List<Integer> ids, int elemCount) {
+        return serverClient.getThumbnailsExcludingSet(thumbnailSize, ids, elemCount)
                 .doOnNext(Base64ImageDataCodec::decode);
     }
 

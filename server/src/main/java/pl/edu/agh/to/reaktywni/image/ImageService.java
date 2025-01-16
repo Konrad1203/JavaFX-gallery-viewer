@@ -1,6 +1,7 @@
 package pl.edu.agh.to.reaktywni.image;
 
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
@@ -41,8 +42,8 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
-    public Flux<Image> getThumbnails(String size) {
-        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySize(ThumbnailSize.valueOf(size)))
+    public Flux<Image> getThumbnails(String size, Pageable pageable) {
+        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySize(ThumbnailSize.valueOf(size), pageable))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
                 .map(this::createImageFromThumbnail)
@@ -51,8 +52,8 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
-    public Flux<Image> getThumbnailsExcludingList(String size, List<Integer> ids) {
-        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySizeExcludingList(ThumbnailSize.valueOf(size), ids))
+    public Flux<Image> getThumbnailsExcludingList(String size, List<Integer> ids, int elemCount) {
+        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySizeExcludingList(ThumbnailSize.valueOf(size), ids, elemCount))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
                 .map(this::createImageFromThumbnail)

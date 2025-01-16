@@ -3,6 +3,7 @@ package pl.edu.agh.to.reaktywni.image;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
@@ -98,7 +99,7 @@ public class ImageServiceTest {
         thumbnail.setData(new byte[50]);
         thumbnailRepository.save(thumbnail);
 
-        Flux<Image> thumbnails = imageService.getThumbnails(String.valueOf(size));
+        Flux<Image> thumbnails = imageService.getThumbnails(String.valueOf(size), Pageable.unpaged());
 
         StepVerifier.create(thumbnails)
                 .expectNextMatches(t -> {

@@ -1,20 +1,24 @@
 package pl.edu.agh.to.reaktywni.thumbnail;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import pl.edu.agh.to.reaktywni.image.ImageState;
-
 import java.util.List;
 
 
 @Repository
 public interface ThumbnailRepository extends JpaRepository<Thumbnail, Integer> {
 
-    List<Thumbnail> getThumbnailsBySize(ThumbnailSize size);
+    List<Thumbnail> getThumbnailsBySize(ThumbnailSize size, Pageable pageable);
 
-    @Query("SELECT t FROM Thumbnail t WHERE t.size = :size AND t.image.id NOT IN :ids")
-    List<Thumbnail> getThumbnailsBySizeExcludingList(ThumbnailSize size, List<Integer> ids);
+    default List<Thumbnail> getThumbnailsBySizeExcludingList(ThumbnailSize size, List<Integer> ids, int elemCount) {
+        return getThumbnailsBySize(size, Pageable.ofSize(elemCount))
+                .stream()
+                .filter(t -> !ids.contains(t.getImage().getId()))
+                .toList();
+    }
 
     long countBySize(ThumbnailSize size);
 
