@@ -38,5 +38,18 @@ public class Image {
                 ", data_len=" + data.length +
                 '}';
     }
+
+    public static Image copyOf(Image image) {
+        return Image.builder()
+                .id(image.getId())
+                .gridId(image.getGridId())
+                .imageState(image.getImageState())
+                .name(image.getName())
+                .extensionType(image.getExtensionType())
+                .width(image.getWidth())
+                .height(image.getHeight())
+                .data(image.getData())
+                .build();
+    }
 }
 

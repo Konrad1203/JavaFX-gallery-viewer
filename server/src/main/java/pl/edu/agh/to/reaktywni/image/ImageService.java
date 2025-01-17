@@ -23,7 +23,6 @@ import java.util.logging.Level;
 public class ImageService {
 
     private final static Logger logger = Logger.getLogger(ImageService.class.getName());
-    //private static final org.slf4j.Logger log = LoggerFactory.getLogger(ImageService.class);
 
     private final ImageRepository imageRepository;
     private final ThumbnailRepository thumbnailRepository;

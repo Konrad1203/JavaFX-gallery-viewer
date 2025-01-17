@@ -33,7 +33,7 @@ public class ImageResizer implements Resizer {
                     .asBufferedImage();
             ImageIO.write(bufferedThumbnail, image.getExtensionType(), outputStream);
 
-        } catch (IOException e) {
+        } catch (IOException | NullPointerException e) {
             logger.warning("Error while resizing image: " + e.getMessage());
             thumbnail.setFailure();
             return thumbnail;

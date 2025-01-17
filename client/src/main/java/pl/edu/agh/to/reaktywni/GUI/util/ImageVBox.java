@@ -21,15 +21,19 @@ public class ImageVBox extends VBox {
 
     private final int startGridId;
 
-    public ImageVBox(int startGridId, ThumbnailSize size, String name, int image_name_height) {
+    public ImageVBox(int startGridId, ThumbnailSize size, String name, int imageNameHeight) {
         this.startGridId = startGridId;
         imageView.setImage(size.getPlaceholder());
         nameLabel.setText(name);
         nameLabel.setWrapText(true);
-        setMinHeight(size.getImageHeight() + image_name_height);
-        setMaxHeight(size.getImageHeight() + image_name_height);
+        setMinHeight(size.getImageHeight() + imageNameHeight);
+        setMaxHeight(size.getImageHeight() + imageNameHeight);
         setAlignment(Pos.TOP_CENTER);
         getChildren().addAll(imageView, nameLabel);
+    }
+
+    public int getGridId() {
+        return startGridId;
     }
 
     public void placeImage(ThumbnailSize size, Image image, StageInitializer stageInitializer, ImagePipeline imagePipeline) {
@@ -45,15 +49,5 @@ public class ImageVBox extends VBox {
             nameLabel.setText("Error: " + image.getName());
             imageView.setImage(size.getErrorImage());
         }
-    }
-
-    public void changeVBoxSize(ThumbnailSize size, int image_name_height) {
-        setMinHeight(size.getImageHeight() + image_name_height);
-        setMaxHeight(size.getImageHeight() + image_name_height);
-        imageView.setImage(size.getPlaceholder());
-    }
-
-    public int getGridId() {
-        return startGridId;
     }
 }
