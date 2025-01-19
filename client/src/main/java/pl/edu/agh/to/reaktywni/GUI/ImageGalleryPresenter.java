@@ -96,6 +96,7 @@ public class ImageGalleryPresenter {
                     path.add(selectedItem.getValue());
                 }
                 System.out.println("Selected item: " + String.join("/", path.reversed()) + '/');
+                refreshGridOnButton();
             }
         });
     }
