@@ -31,9 +31,9 @@ public class ServerClient {
             .doOnError(e -> logger.log(Level.SEVERE, "getFullImageError: " + e.getMessage()));
     }
 
-    public Flux<Image> sendImages(Flux<Image> images, String thumbnailSize) {
+    public Flux<Image> sendImages(Flux<Image> images, String thumbnailSize, String directoryPath) {
         return webClient.post()
-                .uri("/images?size={size}", thumbnailSize)
+                .uri("/images?size={size}&directoryPath={directoryPath}", thumbnailSize, directoryPath)
                 .contentType(MediaType.APPLICATION_NDJSON)
                 .body(images, Image.class)
                 .retrieve()

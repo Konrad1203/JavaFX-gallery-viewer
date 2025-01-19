@@ -21,14 +21,15 @@ public class ImagePipeline {
         this.serverClient = serverClient;
     }
 
-    public Flux<Image> sendAndReceiveImages(List<Image> images, String thumbnailSize) {
+    public Flux<Image> sendAndReceiveImages(List<Image> images, String thumbnailSize, String directoryPath) {
         logger.info("Sending images: " + images.size());
 
         images.stream().forEach(image -> logger.info("Image dir path: " + image.getDirectoryPath()));
 
         Flux<Image> receivedImages = serverClient.sendImages(
                 Flux.fromIterable(images).doOnNext(Base64ImageDataCodec::encode),
-                thumbnailSize
+                thumbnailSize,
+                directoryPath
         );
 
         return receivedImages.doOnNext(Base64ImageDataCodec::decode)

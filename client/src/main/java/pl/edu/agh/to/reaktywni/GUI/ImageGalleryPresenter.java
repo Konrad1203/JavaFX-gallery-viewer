@@ -334,8 +334,13 @@ public class ImageGalleryPresenter {
         int startCount = imageVBoxes.size();
         List<Image> imagesCopy = selectedImages.stream().map(Image::copyOf).toList();
         for (int i = 0; i < imagesCopy.size(); i++) imagesCopy.get(i).setGridId(startCount + i);
-        addNamedPlaceholdersToGrid(imagesCopy.stream().map(Image::getName).toList());
-        imagePipeline.sendAndReceiveImages(imagesCopy, thumbnailsSize.toString())
+        addNamedPlaceholdersToGrid(
+                imagesCopy.stream()
+                .filter(image -> image.getDirectoryPath().equals(getSelectedDirectoryPath()))
+                .map(Image::getName)
+                .toList()
+        );
+        imagePipeline.sendAndReceiveImages(imagesCopy, thumbnailsSize.toString(), getSelectedDirectoryPath())
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe(
                         image -> replacePlaceholderWithImage(image, image.getGridId()),

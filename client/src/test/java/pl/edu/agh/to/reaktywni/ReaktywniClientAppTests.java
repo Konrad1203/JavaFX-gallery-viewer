@@ -101,7 +101,7 @@ class ReaktywniClientAppTests {
 				loadImage("test-png.png", 1)
 		));
 
-		Flux<Image> result = serverClient.sendImages(images, "MEDIUM");
+		Flux<Image> result = serverClient.sendImages(images, "MEDIUM", "/");
 
 		StepVerifier.create(result)
 				.expectNextMatches(image -> image.getName().equals("test-pepe.jpg"))

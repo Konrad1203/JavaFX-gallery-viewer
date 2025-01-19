@@ -26,11 +26,12 @@ public class ImageController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_NDJSON_VALUE, produces = MediaType.APPLICATION_NDJSON_VALUE)
-    public Flux<Image> postImages(@RequestBody Flux<Image> images, @RequestParam String size) {
+    public Flux<Image> postImages(@RequestBody Flux<Image> images, @RequestParam String size, @RequestParam String directoryPath) {
+        System.out.println(directoryPath);
         if (!ThumbnailSize.isValidSize(size)) {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
-        return imageService.processImages(images, size);
+        return imageService.processImages(images, size, directoryPath);
     }
 }
 

@@ -45,7 +45,7 @@ public class ImageService {
         return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySizeAndImageDirectoryPath(ThumbnailSize.valueOf(size), directoryPath, pageable))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
-                .map(this::createImageFromThumbnail)
+                .map(thumbnail -> createImageFromThumbnail(thumbnail, directoryPath))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .doOnNext(Base64ImageDataCodec::encode);
@@ -55,7 +55,7 @@ public class ImageService {
         return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySizeExcludingList(ThumbnailSize.valueOf(size), directoryPath, ids, elemCount))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
-                .map(this::createImageFromThumbnail)
+                .map(thumbnail -> createImageFromThumbnail(thumbnail, directoryPath))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .doOnNext(Base64ImageDataCodec::encode);
@@ -67,7 +67,7 @@ public class ImageService {
                 .flatMap(Mono::justOrEmpty);
     }
 
-    public Flux<Image> processImages(Flux<Image> images, String size) {
+    public Flux<Image> processImages(Flux<Image> images, String size, String directoryPath) {
         return images
                 .doOnNext(Base64ImageDataCodec::decode)
                 .doOnNext(this::logImageData)
@@ -79,6 +79,7 @@ public class ImageService {
                         .subscribe())
                 .flatMap(image -> processThumbnailAndReturnImage(image, ThumbnailSize.valueOf(size)))
                 .doOnNext(this::logProcessedData)
+                .filter(image -> image.getDirectoryPath().equals(directoryPath))
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
@@ -92,7 +93,7 @@ public class ImageService {
 
     private Mono<Image> processThumbnailAndReturnImage(Image image, ThumbnailSize thumbnailSize) {
         return generateAndUpdateThumbnail(image, thumbnailSize)
-                .map(thumbnail -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), image.getGridId()));
+                .map(thumbnail -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), image.getDirectoryPath(), image.getGridId()));
     }
 
     private void generateAndSaveOtherThumbnails(Image image, ThumbnailSize thumbnailSize) {
@@ -134,9 +135,9 @@ public class ImageService {
     }
 
 
-    private Optional<Image> createImageFromThumbnail(Thumbnail thumbnail) {
+    private Optional<Image> createImageFromThumbnail(Thumbnail thumbnail, String directoryPath) {
         return imageRepository.findImageMetaDataById(thumbnail.getImageId())
-                .map(image -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), -1));
+                .map(image -> createImageFromThumbnail(thumbnail, image.getName(), image.getExtensionType(), directoryPath, -1));
     }
 
     public void createEmptyThumbnailsIfMissing() {
@@ -187,7 +188,7 @@ public class ImageService {
                 .subscribe();
     }
 
-    private Image createImageFromThumbnail(Thumbnail thumbnail, String imageName, String extensionType, int gridId) {
+    private Image createImageFromThumbnail(Thumbnail thumbnail, String imageName, String extensionType, String directoryPath, int gridId) {
         return Image.builder()
                 .id(thumbnail.getImageId())
                 .gridId(gridId)
@@ -197,6 +198,7 @@ public class ImageService {
                 .width(thumbnail.getSize().getWidth())
                 .height(thumbnail.getSize().getHeight())
                 .data(thumbnail.getData())
+                .directoryPath(directoryPath)
                 .build();
     }
 

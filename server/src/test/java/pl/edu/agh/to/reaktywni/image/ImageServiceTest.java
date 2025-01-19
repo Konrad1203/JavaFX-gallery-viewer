@@ -73,7 +73,7 @@ public class ImageServiceTest {
         Image image = getExistingImage(byteArrayOutputStream, originalImage);
         imageRepository.save(image);
 
-        Flux<Image> processedImages = imageService.processImages(Flux.just(image), "MEDIUM");
+        Flux<Image> processedImages = imageService.processImages(Flux.just(image), "MEDIUM", "/");
 
         StepVerifier.create(processedImages)
                 .expectNextMatches(i -> {
