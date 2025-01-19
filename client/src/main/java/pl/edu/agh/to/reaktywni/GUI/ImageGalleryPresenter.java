@@ -66,7 +66,7 @@ public class ImageGalleryPresenter {
         initializeSizeSlider();
         initializeTreeView();
         initializeOnScrollAction();
-        imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), getSelectedDirectoryPath())
                 .subscribe(this::fetchThumbnailsOnStart, this::showInitializationError);
     }
 
@@ -109,7 +109,7 @@ public class ImageGalleryPresenter {
 
     // =========================== FETCHING NEXT THUMBNAILS ON SCROLL =================================
     private void fetchNextPageOfThumbnails() {
-        List<Image> imageList = imagePipeline.getThumbnails(thumbnailsSize.name(), pagesDownloaded, thumbnailsSize.getPageSize())
+        List<Image> imageList = imagePipeline.getThumbnails(thumbnailsSize.name(), getSelectedDirectoryPath(), pagesDownloaded, thumbnailsSize.getPageSize())
                 .collectList()
                 .block();
         if (imageList == null) { logger.warning("Failed to load new thumbnails page!"); return; }
@@ -130,7 +130,7 @@ public class ImageGalleryPresenter {
         addStartPlaceholdersToGrid(Math.min(count, thumbnailsSize.getPageSize()));
         pagesDownloaded = 1;
         scrolledToEnd = false;
-        imagePipeline.getThumbnails(thumbnailsSize.toString(), 0, thumbnailsSize.getPageSize())
+        imagePipeline.getThumbnails(thumbnailsSize.toString(), getSelectedDirectoryPath(),0, thumbnailsSize.getPageSize())
                 .index()
                 .subscribe(image -> replacePlaceholderWithImage(image.getT2(), image.getT1().intValue()),
                         e -> logger.log(Level.SEVERE,"initializeThumbnailsOnStartError: " + e.getMessage()),
@@ -161,7 +161,7 @@ public class ImageGalleryPresenter {
     }
 
     private void removeUnnecessaryVBoxes() {
-        imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), getSelectedDirectoryPath())
                 .subscribe(
                         count -> {
                             if (count < imageVBoxes.size()) {
@@ -181,7 +181,7 @@ public class ImageGalleryPresenter {
 
     private void fetchMissingThumbnails() {
         logger.info("Fetching missing thumbnails");
-        imagePipeline.getThumbnailsExcludingList(thumbnailsSize.toString(), imageIds, imageVBoxes.size())
+        imagePipeline.getThumbnailsExcludingList(thumbnailsSize.toString(), getSelectedDirectoryPath(), imageIds, imageVBoxes.size())
                 .subscribe(
                         image -> replacePlaceholderWithImage(image, emptyImageVBoxes.getFirst().getGridId()),
                         e -> logger.log(Level.SEVERE,"downloadAndUpdateThumbnailsError: " + e.getMessage()),
@@ -229,7 +229,7 @@ public class ImageGalleryPresenter {
     private void fetchThumbnailsAfterSizeChange() {
         pagesDownloaded = 1;
         scrolledToEnd = false;
-        imagePipeline.getThumbnails(thumbnailsSize.toString(), 0, thumbnailsSize.getPageSize())
+        imagePipeline.getThumbnails(thumbnailsSize.toString(), getSelectedDirectoryPath(), 0, thumbnailsSize.getPageSize())
                 .subscribe(
                         image -> replacePlaceholderWithImage(image, addPlaceholderToGrid("Placing...")),
                         error -> Platform.runLater(() -> {
@@ -365,7 +365,7 @@ public class ImageGalleryPresenter {
         emptyImageVBoxes.clear();
         imageIds.clear();
 
-        imagePipeline.getThumbnailsCount(thumbnailsSize.toString())
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), getSelectedDirectoryPath())
                 .subscribe(
                         this::fetchThumbnailsOnStart,
                         error -> Platform.runLater(() -> {
@@ -407,6 +407,21 @@ public class ImageGalleryPresenter {
             emptyImageVBoxes.addLast(imageVBox);
         }
         Platform.runLater(() -> imageVBox.placeImage(thumbnailsSize, image, stageInitializer, imagePipeline));
+    }
+
+    private String getSelectedDirectoryPath() {
+        TreeItem<String> selectedItem = dirSelectionView.getSelectionModel().getSelectedItem();
+        if (selectedItem == null || "Root".equals(selectedItem.getValue())) {
+            return "/";
+        }
+        List<String> path = new ArrayList<>();
+        path.add(selectedItem.getValue());
+        while (selectedItem.getParent() != null && !"Root".equals(selectedItem.getParent().getValue())) {
+            selectedItem = selectedItem.getParent();
+            path.add(selectedItem.getValue());
+        }
+        Collections.reverse(path);
+        return "/" + String.join("/", path) + "/";
     }
     // ================================================================================================
 }

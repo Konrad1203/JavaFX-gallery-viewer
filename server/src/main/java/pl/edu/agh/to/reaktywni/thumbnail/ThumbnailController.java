@@ -25,27 +25,27 @@ public class ThumbnailController {
     }
 
     @GetMapping()
-    public Flux<Image> getThumbnails(@RequestParam String size, @RequestParam int page, @RequestParam int pageSize) {
+    public Flux<Image> getThumbnails(@RequestParam String size, @RequestParam String directoryPath, @RequestParam int page, @RequestParam int pageSize) {
         if (!ThumbnailSize.isValidSize(size)) {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
-        return imageService.getThumbnails(size, PageRequest.of(page, pageSize));
+        return imageService.getThumbnails(size, directoryPath, PageRequest.of(page, pageSize));
     }
 
     @GetMapping("/excluding")
-    public Flux<Image> getThumbnailsExcludingList(@RequestParam String size, @RequestParam List<Integer> ids, @RequestParam int elemCount) {
+    public Flux<Image> getThumbnailsExcludingList(@RequestParam String size, @RequestParam String directoryPath, @RequestParam List<Integer> ids, @RequestParam int elemCount) {
         if (!ThumbnailSize.isValidSize(size)) {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
-        return imageService.getThumbnailsExcludingList(size, ids, elemCount);
+        return imageService.getThumbnailsExcludingList(size, directoryPath, ids, elemCount);
     }
 
     @GetMapping("/count")
-    public Mono<Long> getThumbnailsCount(@RequestParam String size) {
+    public Mono<Long> getThumbnailsCount(@RequestParam String size, @RequestParam String directoryPath) {
         if (!ThumbnailSize.isValidSize(size)) {
             return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
-        return imageService.getThumbnailsCount(size)
+        return imageService.getThumbnailsCount(size, directoryPath)
                 .switchIfEmpty(Mono.error(new IllegalStateException("Cannot get thumbnails count")));
     }
 }

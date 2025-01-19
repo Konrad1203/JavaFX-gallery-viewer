@@ -25,6 +25,8 @@ public class Image {
 
     @Setter private byte[] data;
 
+    private String directoryPath;
+
     @Override
     public String toString() {
         return "Image{" +
@@ -49,6 +51,7 @@ public class Image {
                 .width(image.getWidth())
                 .height(image.getHeight())
                 .data(image.getData())
+                .directoryPath(image.getDirectoryPath())
                 .build();
     }
 }

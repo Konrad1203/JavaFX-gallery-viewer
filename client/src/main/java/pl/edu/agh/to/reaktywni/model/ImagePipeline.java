@@ -24,6 +24,8 @@ public class ImagePipeline {
     public Flux<Image> sendAndReceiveImages(List<Image> images, String thumbnailSize) {
         logger.info("Sending images: " + images.size());
 
+        images.stream().forEach(image -> logger.info("Image dir path: " + image.getDirectoryPath()));
+
         Flux<Image> receivedImages = serverClient.sendImages(
                 Flux.fromIterable(images).doOnNext(Base64ImageDataCodec::encode),
                 thumbnailSize
@@ -37,18 +39,18 @@ public class ImagePipeline {
         logger.info("Received: " + image);
     }
 
-    public Flux<Image> getThumbnails(String thumbnailSize, int page, int pageSize) {
-        return serverClient.getThumbnails(thumbnailSize, page, pageSize)
+    public Flux<Image> getThumbnails(String thumbnailSize, String directoryPath, int page, int pageSize) {
+        return serverClient.getThumbnails(thumbnailSize, directoryPath, page, pageSize)
                 .doOnNext(Base64ImageDataCodec::decode);
     }
 
-    public Flux<Image> getThumbnailsExcludingList(String thumbnailSize, List<Integer> ids, int elemCount) {
-        return serverClient.getThumbnailsExcludingSet(thumbnailSize, ids, elemCount)
+    public Flux<Image> getThumbnailsExcludingList(String thumbnailSize, String directoryPath, List<Integer> ids, int elemCount) {
+        return serverClient.getThumbnailsExcludingSet(thumbnailSize, directoryPath, ids, elemCount)
                 .doOnNext(Base64ImageDataCodec::decode);
     }
 
-    public Mono<Long> getThumbnailsCount(String thumbnailSize) {
-        return serverClient.getThumbnailsCount(thumbnailSize);
+    public Mono<Long> getThumbnailsCount(String thumbnailSize, String directoryPath) {
+        return serverClient.getThumbnailsCount(thumbnailSize, directoryPath);
     }
 
     public Mono<Image> getFullImage(int id) {

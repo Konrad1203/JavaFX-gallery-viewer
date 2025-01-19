@@ -99,7 +99,7 @@ public class ImageServiceTest {
         thumbnail.setData(new byte[50]);
         thumbnailRepository.save(thumbnail);
 
-        Flux<Image> thumbnails = imageService.getThumbnails(String.valueOf(size), Pageable.unpaged());
+        Flux<Image> thumbnails = imageService.getThumbnails(String.valueOf(size), "/", Pageable.unpaged());
 
         StepVerifier.create(thumbnails)
                 .expectNextMatches(t -> {
@@ -123,12 +123,12 @@ public class ImageServiceTest {
                 new Thumbnail(image, ThumbnailSize.LARGE)
         );
         thumbnailRepository.saveAll(thumbnails);
-
-        Optional<Long> smallCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.SMALL)).blockOptional();
+        String directoryPath = "/";
+        Optional<Long> smallCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.SMALL), directoryPath).blockOptional();
         if (smallCount.isEmpty()) fail("smallCount is empty");
-        Optional<Long> mediumCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.MEDIUM)).blockOptional();
+        Optional<Long> mediumCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.MEDIUM), directoryPath).blockOptional();
         if (mediumCount.isEmpty()) fail("mediumCount is empty");
-        Optional<Long> largeCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.LARGE)).blockOptional();
+        Optional<Long> largeCount = imageService.getThumbnailsCount(String.valueOf(ThumbnailSize.LARGE), directoryPath).blockOptional();
         if (largeCount.isEmpty()) fail("largeCount is empty");
 
         assertEquals(2L, smallCount.get());

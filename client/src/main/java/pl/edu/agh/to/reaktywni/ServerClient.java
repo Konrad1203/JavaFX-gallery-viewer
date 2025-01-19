@@ -41,17 +41,17 @@ public class ServerClient {
                 .doOnError(e -> logger.log(Level.SEVERE, "sendImagesError: " + e.getMessage()));
     }
 
-    public Flux<Image> getThumbnails(String thumbnailSize, int page, int pageSize) {
+    public Flux<Image> getThumbnails(String thumbnailSize, String directoryPath, int page, int pageSize) {
         return webClient.get()
-                .uri("/thumbnails?size={size}&page={page}&pageSize={pageSize}", thumbnailSize, page, pageSize)
+                .uri("/thumbnails?size={size}&directoryPath={directoryPath}&page={page}&pageSize={pageSize}", thumbnailSize, directoryPath, page, pageSize)
                 .retrieve()
                 .bodyToFlux(Image.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsError: " + e.getMessage()));
     }
 
-    public Flux<Image> getThumbnailsExcludingSet(String thumbnailSize, List<Integer> ids, int elemCount) {
+    public Flux<Image> getThumbnailsExcludingSet(String thumbnailSize, String directoryPath, List<Integer> ids, int elemCount) {
         return webClient.get()
-                .uri("/thumbnails/excluding?size={size}&ids={ids}&elemCount={elemCount}", thumbnailSize, convertListToString(ids), elemCount)
+                .uri("/thumbnails/excluding?size={size}&directoryPath={directoryPath}&ids={ids}&elemCount={elemCount}", thumbnailSize, directoryPath, convertListToString(ids), elemCount)
                 .retrieve()
                 .bodyToFlux(Image.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsExcludingListError: " + e.getMessage()));
@@ -61,9 +61,9 @@ public class ServerClient {
         return String.join(",", ids.stream().map(String::valueOf).toList());
     }
 
-    public Mono<Long> getThumbnailsCount(String thumbnailSize) {
+    public Mono<Long> getThumbnailsCount(String thumbnailSize, String directoryPath) {
         return webClient.get()
-                .uri("/thumbnails/count?size={size}", thumbnailSize)
+                .uri("/thumbnails/count?size={size}&directoryPath={directoryPath}", thumbnailSize, directoryPath)
                 .retrieve()
                 .bodyToMono(Long.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsCountError: " + e.getMessage()));

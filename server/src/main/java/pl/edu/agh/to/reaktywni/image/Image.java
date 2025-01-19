@@ -34,6 +34,8 @@ public class Image {
     @Lob
     private byte[] data;
 
+    private String directoryPath;
+
     @Override
     public String toString() {
         return "Image{" +

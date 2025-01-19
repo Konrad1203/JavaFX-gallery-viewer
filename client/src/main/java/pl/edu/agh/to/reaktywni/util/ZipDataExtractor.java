@@ -92,7 +92,7 @@ public interface ZipDataExtractor {
         return Optional.of(Image.builder()
                         .name(getFileName(filename))
                         .extensionType(getFileExtension(filename))
-                        //.directory(getDirectoryPath(filename))   coś takiego?
+                        .directoryPath(getDirectoryPath(filename))
                         .width(dimensions[0])
                         .height(dimensions[1])
                         .data(data)
@@ -106,7 +106,7 @@ public interface ZipDataExtractor {
     
     private static String getDirectoryPath(String path) {
         int lastSlashIndex = path.lastIndexOf('/');
-        return path.substring(0, lastSlashIndex + 1);
+        return "/" + path.substring(0, lastSlashIndex + 1);
     }
 
     private static int[] getImageDimensions(InputStream stream, String extensionType) throws IOException {

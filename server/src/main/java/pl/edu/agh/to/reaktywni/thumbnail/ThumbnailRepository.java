@@ -11,16 +11,18 @@ import java.util.List;
 @Repository
 public interface ThumbnailRepository extends JpaRepository<Thumbnail, Integer> {
 
-    List<Thumbnail> getThumbnailsBySize(ThumbnailSize size, Pageable pageable);
+    @Query("SELECT t FROM Thumbnail t WHERE t.size = :size AND t.image.directoryPath = :directoryPath")
+    List<Thumbnail> getThumbnailsBySizeAndImageDirectoryPath(ThumbnailSize size, String directoryPath, Pageable pageable);
 
-    default List<Thumbnail> getThumbnailsBySizeExcludingList(ThumbnailSize size, List<Integer> ids, int elemCount) {
-        return getThumbnailsBySize(size, Pageable.ofSize(elemCount))
+    default List<Thumbnail> getThumbnailsBySizeExcludingList(ThumbnailSize size, String directoryPath, List<Integer> ids, int elemCount) {
+        return getThumbnailsBySizeAndImageDirectoryPath(size, directoryPath, Pageable.ofSize(elemCount))
                 .stream()
                 .filter(t -> !ids.contains(t.getImage().getId()))
                 .toList();
     }
 
-    long countBySize(ThumbnailSize size);
+    @Query("SELECT count(t) FROM Thumbnail t WHERE t.size = :size AND t.image.directoryPath = :directoryPath")
+    long countBySizeAndImageDirectoryPath(ThumbnailSize size, String directoryPath);
 
     @Query("SELECT t FROM Thumbnail t WHERE t.image.id = :id")
     List<Thumbnail> findByImageId(int id);

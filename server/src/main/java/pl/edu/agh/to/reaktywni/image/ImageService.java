@@ -41,8 +41,8 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
-    public Flux<Image> getThumbnails(String size, Pageable pageable) {
-        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySize(ThumbnailSize.valueOf(size), pageable))
+    public Flux<Image> getThumbnails(String size, String directoryPath, Pageable pageable) {
+        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySizeAndImageDirectoryPath(ThumbnailSize.valueOf(size), directoryPath, pageable))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
                 .map(this::createImageFromThumbnail)
@@ -51,8 +51,8 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
-    public Flux<Image> getThumbnailsExcludingList(String size, List<Integer> ids, int elemCount) {
-        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySizeExcludingList(ThumbnailSize.valueOf(size), ids, elemCount))
+    public Flux<Image> getThumbnailsExcludingList(String size, String directoryPath, List<Integer> ids, int elemCount) {
+        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySizeExcludingList(ThumbnailSize.valueOf(size), directoryPath, ids, elemCount))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
                 .map(this::createImageFromThumbnail)
@@ -61,8 +61,8 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::encode);
     }
 
-    public Mono<Long> getThumbnailsCount(String size) {
-        return Mono.fromCallable(() -> thumbnailRepository.countBySize(ThumbnailSize.valueOf(size)))
+    public Mono<Long> getThumbnailsCount(String size, String directoryPath) {
+        return Mono.fromCallable(() -> thumbnailRepository.countBySizeAndImageDirectoryPath(ThumbnailSize.valueOf(size), directoryPath))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(Mono::justOrEmpty);
     }
@@ -72,6 +72,7 @@ public class ImageService {
                 .doOnNext(Base64ImageDataCodec::decode)
                 .doOnNext(this::logImageData)
                 .map(imageRepository::save)
+                .doOnNext(image -> logger.log(Level.INFO, "Image saved: " + image.getName() + " | Directory Path: " + image.getDirectoryPath()))
                 .doOnNext(this::saveEmptyThumbnails)
                 .doOnNext(image -> Mono.fromRunnable(() -> generateAndSaveOtherThumbnails(image, ThumbnailSize.valueOf(size)))
                         .subscribeOn(Schedulers.boundedElastic())
