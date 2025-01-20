@@ -16,7 +16,7 @@ public interface ThumbnailRepository extends JpaRepository<Thumbnail, Integer> {
 
     @Query(value = "SELECT * FROM (SELECT * FROM thumbnail LIMIT :elemCount) subquery " +
             "WHERE subquery.size = :size " +
-            "AND subquery.image.directoryPath = :directoryPath " +
+            "AND subquery.image.directory_path = :directoryPath " +
             "AND subquery.image_id NOT IN :ids", nativeQuery = true)
     List<Thumbnail> getBySizeAndPathExcludingList(ThumbnailSize size, String directoryPath, List<Integer> ids, int elemCount);
 

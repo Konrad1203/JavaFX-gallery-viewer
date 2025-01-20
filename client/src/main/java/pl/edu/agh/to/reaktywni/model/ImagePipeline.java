@@ -3,6 +3,7 @@ package pl.edu.agh.to.reaktywni.model;
 import org.springframework.stereotype.Component;
 import pl.edu.agh.to.reaktywni.ServerClient;
 import pl.edu.agh.to.reaktywni.util.Base64ImageDataCodec;
+import pl.edu.agh.to.reaktywni.util.ZipDataExtractor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -24,7 +25,7 @@ public class ImagePipeline {
     public Flux<Image> sendAndReceiveImages(List<Image> images, String thumbnailSize, String directoryPath) {
         logger.info("Sending images: " + images.size());
 
-        images.stream().forEach(image -> logger.info("Image dir path: " + image.getDirectoryPath()));
+        images.forEach(image -> logger.info("Image dir path: " + image.getDirectoryPath()));
 
         Flux<Image> receivedImages = serverClient.sendImages(
                 Flux.fromIterable(images).doOnNext(Base64ImageDataCodec::encode),
@@ -58,5 +59,9 @@ public class ImagePipeline {
         return serverClient.getFullImage(id)
                 .doOnNext(Base64ImageDataCodec::decode)
                 .doOnError(e -> logger.log(Level.SEVERE, "getFullImageError: " + e.getMessage()));
+    }
+
+    public Mono<ZipDataExtractor.Directory> getDirectoryTree() {
+        return serverClient.getDirectoryTree();
     }
 }

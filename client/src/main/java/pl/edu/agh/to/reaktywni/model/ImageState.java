@@ -4,5 +4,6 @@ package pl.edu.agh.to.reaktywni.model;
 public enum ImageState {
     PENDING,
     SUCCESS,
-    FAILURE
+    FAILURE,
+    DIR_DATA_PACKET,
 }

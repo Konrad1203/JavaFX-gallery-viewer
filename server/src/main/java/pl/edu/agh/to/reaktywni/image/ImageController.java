@@ -5,6 +5,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailSize;
+import pl.edu.agh.to.reaktywni.util.Directory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -32,6 +33,12 @@ public class ImageController {
             return Flux.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid thumbnail size"));
         }
         return imageService.processImages(images, size, directoryPath);
+    }
+
+    @GetMapping("/directoryTree")
+    public Mono<Directory> getDirectoryTree() {
+        return imageService.getDirectoryTree()
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No directory tree found")));
     }
 }
 

@@ -4,6 +4,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import pl.edu.agh.to.reaktywni.model.Image;
+import pl.edu.agh.to.reaktywni.util.ZipDataExtractor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -67,6 +68,14 @@ public class ServerClient {
                 .retrieve()
                 .bodyToMono(Long.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "getThumbnailsCountError: " + e.getMessage()));
+    }
+
+    public Mono<ZipDataExtractor.Directory> getDirectoryTree() {
+        return webClient.get()
+                .uri("/images/directoryTree")
+                .retrieve()
+                .bodyToMono(ZipDataExtractor.Directory.class)
+                .doOnError(e -> logger.log(Level.SEVERE, "getDirectoryTreeError: " + e.getMessage()));
     }
 }
 

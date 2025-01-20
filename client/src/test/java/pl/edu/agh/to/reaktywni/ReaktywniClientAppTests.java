@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.reactive.function.client.WebClient;
 import pl.edu.agh.to.reaktywni.model.Image;
+import pl.edu.agh.to.reaktywni.model.ImageState;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -101,7 +102,8 @@ class ReaktywniClientAppTests {
 				loadImage("test-png.png", 1)
 		));
 
-		Flux<Image> result = serverClient.sendImages(images, "MEDIUM", "/");
+		Flux<Image> result = serverClient.sendImages(images, "MEDIUM", "/")
+				.filter(image -> !image.getImageState().equals(ImageState.DIR_DATA_PACKET));
 
 		StepVerifier.create(result)
 				.expectNextMatches(image -> image.getName().equals("test-pepe.jpg"))

@@ -1,17 +1,21 @@
 package pl.edu.agh.to.reaktywni.image;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailSize;
 import pl.edu.agh.to.reaktywni.util.Base64ImageDataCodec;
+import pl.edu.agh.to.reaktywni.util.Directory;
+import pl.edu.agh.to.reaktywni.util.JsonFileReaderWriter;
 import pl.edu.agh.to.reaktywni.util.Resizer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -28,10 +32,27 @@ public class ImageService {
     private final ThumbnailRepository thumbnailRepository;
     private final Resizer imageResizer;
 
+    private final Directory directoryTree;
+
     public ImageService(ImageRepository imageRepository, ThumbnailRepository thumbnailRepository, Resizer imageResizer) {
         this.imageRepository = imageRepository;
         this.thumbnailRepository = thumbnailRepository;
         this.imageResizer = imageResizer;
+
+        Directory tempDirectoryTree;
+        try {
+            String json = JsonFileReaderWriter.read();
+            tempDirectoryTree = Directory.parseFromJson(json);
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Error reading directory tree from file: " + e.getMessage());
+            tempDirectoryTree = Directory.createRoot();
+            try {
+                JsonFileReaderWriter.write(tempDirectoryTree.toJson());
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Failed to save empty Root to file: " + ex.getMessage());
+            }
+        }
+        this.directoryTree = tempDirectoryTree;
     }
 
     public Mono<Image> getImage(int id) {
@@ -68,9 +89,11 @@ public class ImageService {
     }
 
     public Flux<Image> processImages(Flux<Image> images, String size, String directoryPath) {
-        return images
+
+        Flux<Image> thumbnails = images
                 .doOnNext(Base64ImageDataCodec::decode)
                 .doOnNext(this::logImageData)
+                .filter(this::filterAndProcessDirDataPacket)
                 .map(imageRepository::save)
                 .doOnNext(image -> logger.log(Level.INFO, "Image saved: " + image.getName() + " | Directory Path: " + image.getDirectoryPath()))
                 .doOnNext(this::saveEmptyThumbnails)
@@ -81,8 +104,33 @@ public class ImageService {
                 .doOnNext(this::logProcessedData)
                 .filter(image -> image.getDirectoryPath().equals(directoryPath))
                 .doOnNext(Base64ImageDataCodec::encode);
+
+        try {
+            return Flux.just(Image.createDirectoryDataPacket(directoryTree.toJson()))
+                    .doOnNext(Base64ImageDataCodec::encode)
+                    .concatWith(thumbnails);
+        } catch (JsonProcessingException e) {
+            logger.log(Level.SEVERE, "Error creating directory data packet: " + e.getMessage());
+            return thumbnails;
+        }
     }
 
+    private boolean filterAndProcessDirDataPacket(Image image) {
+        if (ImageState.DIR_DATA_PACKET.equals(image.getImageState())) {
+            try {
+                Directory directoryFromClient = Directory.parseFromJson(new String(image.getData()));
+                directoryTree.merge(directoryFromClient);
+                JsonFileReaderWriter.write(directoryTree.toJson());
+            } catch (JsonProcessingException e) {
+                logger.log(Level.WARNING, "Error parsing directory data packet: " + e.getMessage());
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Error writing directory data packet to file: " + e.getMessage());
+            }
+            return false;
+        } else {
+            return true;
+        }
+    }
     private void saveEmptyThumbnails(Image image) {
         thumbnailRepository.saveAll(
                 Arrays.stream(ThumbnailSize.values())
@@ -216,5 +264,9 @@ public class ImageService {
 
     private void logProcessedData(Image image) {
         logger.log(Level.INFO, "To be sent: " + image);
+    }
+
+    public Mono<Directory> getDirectoryTree() {
+        return Mono.just(directoryTree);
     }
 }

@@ -1,5 +1,6 @@
 package pl.edu.agh.to.reaktywni.GUI;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -89,6 +90,9 @@ public class ImageGalleryPresenter {
     private void initializeTreeView() {
         dirSelectionView.getSelectionModel().selectFirst();
         selectedDirectoryPath = getSelectedDirectoryPath();
+
+        imagePipeline.getDirectoryTree().blockOptional()
+                .ifPresent(this::addDirectoryToTreeView);
 
         dirSelectionView.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 1) {
@@ -292,7 +296,16 @@ public class ImageGalleryPresenter {
                 ZipDataExtractor.ZipData zipData = ZipDataExtractor.extractZipData(file);
                 addDirectoryToTreeView(zipData.directory());
                 if (zipData.images().isEmpty()) filesSelectedLabel.setText("Selected zip file has no images!");
-                else { selectedImages = zipData.images(); filesSelectedLabel.setText("Selected zip file with " + selectedImages.size() + " images"); }
+                else {
+                    selectedImages = zipData.images();
+                    filesSelectedLabel.setText("Selected zip file with " + selectedImages.size() + " images");
+                    try {
+                        String json = zipData.directory().toJson();
+                        selectedImages.addFirst(Image.createDirectoryDataPacket(json));
+                    } catch (JsonProcessingException e) {
+                        logger.log(Level.SEVERE, "Json processing error: " + e.getMessage());
+                    }
+                }
                 filesSelectedLabel.setVisible(true);
             } catch (IOException e) {
                 selectedImages = null;
@@ -337,7 +350,7 @@ public class ImageGalleryPresenter {
 
         List<Image> imagesCopy = selectedImages.stream().map(Image::copyOf).toList();
         List<Image> filteredImages = imagesCopy.stream()
-                .filter(image -> image.getDirectoryPath().equals(selectedDirectoryPath))
+                .filter(image -> selectedDirectoryPath.equals(image.getDirectoryPath()))
                 .toList();
 
         for (int i = 0; i < filteredImages.size(); i++) filteredImages.get(i).setGridId(startCount + i);
@@ -345,12 +358,25 @@ public class ImageGalleryPresenter {
         addNamedPlaceholdersToGrid(filteredImagesNames);
 
         imagePipeline.sendAndReceiveImages(imagesCopy, thumbnailsSize.toString(), selectedDirectoryPath)
+                .filter(this::filterAndProcessDirDataPacket)
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe(
                         image -> replacePlaceholderWithImage(image, image.getGridId()),
                         this::handleServerError,
                         processingThreads::decrementAndGet
                 );
+    }
+
+    private boolean filterAndProcessDirDataPacket(Image image) {
+        if (ImageState.DIR_DATA_PACKET.equals(image.getImageState())) {
+            try {
+                addDirectoryToTreeView(ZipDataExtractor.Directory.parseFromJson(new String(image.getData())));
+            } catch (JsonProcessingException e) {
+                logger.warning("Failed to process directory data packet: " + e.getMessage());
+            }
+            return false;
+        }
+        return true;
     }
 
     private void handleServerError(Throwable e) {

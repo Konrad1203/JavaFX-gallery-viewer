@@ -1,5 +1,7 @@
 package pl.edu.agh.to.reaktywni.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import pl.edu.agh.to.reaktywni.model.Image;
 
 import javax.imageio.ImageIO;
@@ -20,35 +22,50 @@ public interface ZipDataExtractor {
     List<String> acceptedExtensions = List.of("jpg", "jpeg", "png", "gif");
 
 
-    record Directory(String name, List<Directory> subdirectories) {
+    record Directory(String name, TreeSet<Directory> subdirectories) implements Comparable<Directory> {
+
+        private Directory(String name) {
+            this(name, new TreeSet<>());
+        }
+
+        public static Directory createRoot() {
+            return new Directory("Root");
+        }
 
         public void addSubdirectory(String path) {
-            List<Directory> currentSubDirs = this.subdirectories;
+            TreeSet<Directory> currSubDirs = subdirectories;
             for (String directoryName : path.split("/")) {
                 if (directoryName.isBlank()) continue;
-                Optional<Directory> existingDir = findDirectoryWithName(currentSubDirs, directoryName);
-                if (existingDir.isEmpty()) currentSubDirs.add(new Directory(directoryName, new ArrayList<>(0)));
-                else currentSubDirs = existingDir.get().subdirectories;
+                Optional<Directory> existingDir = findDirectoryWithName(currSubDirs, directoryName);
+                if (existingDir.isEmpty()) currSubDirs.add(new Directory(directoryName));
+                else currSubDirs = existingDir.get().subdirectories;
             }
         }
 
-        private Optional<Directory> findDirectoryWithName(List<Directory> directories, String name) {
-            for (Directory directory : directories) {
-                if (directory.name.equals(name))
-                    return Optional.of(directory);
-            }
-            return Optional.empty();
-        }
-
-        private void sortSubdirectories() {
-            subdirectories.sort(Comparator.comparing(Directory::name));
-            if (!subdirectories.isEmpty()) subdirectories.forEach(Directory::sortSubdirectories);
+        private Optional<Directory> findDirectoryWithName(TreeSet<Directory> directories, String name) {
+            Directory foundElement = directories.floor(new Directory(name, null));
+            return (foundElement != null && foundElement.name.equals(name)) ? Optional.of(foundElement) : Optional.empty();
         }
 
         @Override
         public String toString() {
             if (subdirectories.isEmpty()) return name;
             else return name + ": " + subdirectories;
+        }
+
+        public String toJson() throws JsonProcessingException {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(this);
+        }
+
+        public static Directory parseFromJson(String json) throws JsonProcessingException {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(json, ZipDataExtractor.Directory.class);
+        }
+
+        @Override
+        public int compareTo(Directory o) {
+            return name.compareTo(o.name);
         }
     }
 
@@ -58,7 +75,7 @@ public interface ZipDataExtractor {
 
     static ZipData extractZipData(File file) throws IOException {
 
-        Directory root = new Directory("root", new ArrayList<>());
+        Directory root = Directory.createRoot();
         List<Image> images = new ArrayList<>();
 
         try (ZipFile zipFile = new ZipFile(file)) {
@@ -76,7 +93,6 @@ public interface ZipDataExtractor {
                 }
             }
         }
-        root.sortSubdirectories();
         return new ZipData(root, images);
     }
 
