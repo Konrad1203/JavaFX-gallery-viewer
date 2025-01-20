@@ -38,6 +38,7 @@ public class Image {
                 ", width=" + width +
                 ", height=" + height +
                 ", data_len=" + data.length +
+                ", dirPath='" + directoryPath + '\'' +
                 '}';
     }
 

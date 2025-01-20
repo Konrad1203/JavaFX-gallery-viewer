@@ -12,24 +12,23 @@ import java.util.List;
 public interface ThumbnailRepository extends JpaRepository<Thumbnail, Integer> {
 
     @Query("SELECT t FROM Thumbnail t WHERE t.size = :size AND t.image.directoryPath = :directoryPath")
-    List<Thumbnail> getThumbnailsBySizeAndImageDirectoryPath(ThumbnailSize size, String directoryPath, Pageable pageable);
+    List<Thumbnail> getBySizeAndPath(ThumbnailSize size, String directoryPath, Pageable pageable);
 
-    default List<Thumbnail> getThumbnailsBySizeExcludingList(ThumbnailSize size, String directoryPath, List<Integer> ids, int elemCount) {
-        return getThumbnailsBySizeAndImageDirectoryPath(size, directoryPath, Pageable.ofSize(elemCount))
-                .stream()
-                .filter(t -> !ids.contains(t.getImage().getId()))
-                .toList();
-    }
+    @Query(value = "SELECT * FROM (SELECT * FROM thumbnail LIMIT :elemCount) subquery " +
+            "WHERE subquery.size = :size " +
+            "AND subquery.image.directoryPath = :directoryPath " +
+            "AND subquery.image_id NOT IN :ids", nativeQuery = true)
+    List<Thumbnail> getBySizeAndPathExcludingList(ThumbnailSize size, String directoryPath, List<Integer> ids, int elemCount);
 
     @Query("SELECT count(t) FROM Thumbnail t WHERE t.size = :size AND t.image.directoryPath = :directoryPath")
-    long countBySizeAndImageDirectoryPath(ThumbnailSize size, String directoryPath);
+    long countBySizeAndPath(ThumbnailSize size, String directoryPath);
 
     @Query("SELECT t FROM Thumbnail t WHERE t.image.id = :id")
-    List<Thumbnail> findByImageId(int id);
+    List<Thumbnail> getByImageId(int id);
 
     @Query("SELECT t FROM Thumbnail t WHERE t.image.id = :id AND t.size = :size")
-    Thumbnail findByImageIdAndSize(int id, ThumbnailSize size);
+    Thumbnail getByImageIdAndSize(int id, ThumbnailSize size);
 
     @Query("SELECT t FROM Thumbnail t JOIN FETCH t.image WHERE t.state = :imageState")
-    Iterable<Thumbnail> findByStateWithImages(ImageState imageState);
+    Iterable<Thumbnail> getByStateWithImages(ImageState imageState);
 }

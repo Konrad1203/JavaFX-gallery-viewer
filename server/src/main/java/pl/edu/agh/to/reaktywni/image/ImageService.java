@@ -42,7 +42,7 @@ public class ImageService {
     }
 
     public Flux<Image> getThumbnails(String size, String directoryPath, Pageable pageable) {
-        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySizeAndImageDirectoryPath(ThumbnailSize.valueOf(size), directoryPath, pageable))
+        return Mono.fromCallable(() -> thumbnailRepository.getBySizeAndPath(ThumbnailSize.valueOf(size), directoryPath, pageable))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
                 .map(thumbnail -> createImageFromThumbnail(thumbnail, directoryPath))
@@ -52,7 +52,7 @@ public class ImageService {
     }
 
     public Flux<Image> getThumbnailsExcludingList(String size, String directoryPath, List<Integer> ids, int elemCount) {
-        return Mono.fromCallable(() -> thumbnailRepository.getThumbnailsBySizeExcludingList(ThumbnailSize.valueOf(size), directoryPath, ids, elemCount))
+        return Mono.fromCallable(() -> thumbnailRepository.getBySizeAndPathExcludingList(ThumbnailSize.valueOf(size), directoryPath, ids, elemCount))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
                 .map(thumbnail -> createImageFromThumbnail(thumbnail, directoryPath))
@@ -62,7 +62,7 @@ public class ImageService {
     }
 
     public Mono<Long> getThumbnailsCount(String size, String directoryPath) {
-        return Mono.fromCallable(() -> thumbnailRepository.countBySizeAndImageDirectoryPath(ThumbnailSize.valueOf(size), directoryPath))
+        return Mono.fromCallable(() -> thumbnailRepository.countBySizeAndPath(ThumbnailSize.valueOf(size), directoryPath))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(Mono::justOrEmpty);
     }
@@ -113,7 +113,7 @@ public class ImageService {
 
     private Mono<Thumbnail> updateEmptyThumbnail(Thumbnail readyThumbnail, Image image, ThumbnailSize thumbnailSize) {
         return Mono.fromCallable(() -> {
-            Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getId(), thumbnailSize);
+            Thumbnail emptyThumbnail = thumbnailRepository.getByImageIdAndSize(image.getId(), thumbnailSize);
             if (readyThumbnail.getState().equals(ImageState.SUCCESS)) {
                 emptyThumbnail.setData(readyThumbnail.getData());
             } else {
@@ -127,7 +127,7 @@ public class ImageService {
 
     private Mono<Thumbnail> updateEmptyThumbnailOnError(Image image, ThumbnailSize thumbnailSize) {
         return Mono.fromCallable(() -> {
-            Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getId(), thumbnailSize);
+            Thumbnail emptyThumbnail = thumbnailRepository.getByImageIdAndSize(image.getId(), thumbnailSize);
             emptyThumbnail.setFailure();
             thumbnailRepository.save(emptyThumbnail);
             return emptyThumbnail;
@@ -160,7 +160,7 @@ public class ImageService {
     }
 
     private void saveMissingThumbnails(int imageId) {
-        List<ThumbnailSize> existingSizes = thumbnailRepository.findByImageId(imageId).stream()
+        List<ThumbnailSize> existingSizes = thumbnailRepository.getByImageId(imageId).stream()
                 .map(Thumbnail::getSize)
                 .toList();
         List<Thumbnail> missingThumbnails = Arrays.stream(ThumbnailSize.values())
@@ -177,7 +177,7 @@ public class ImageService {
     }
 
     private void reprocessPendingThumbnails(ImageState state) {
-        Flux.fromIterable(thumbnailRepository.findByStateWithImages(state))
+        Flux.fromIterable(thumbnailRepository.getByStateWithImages(state))
                 .doOnNext(this::logReprocessing)
                 .flatMap(thumbnail -> Mono.fromCallable(thumbnail::getImage)
                         .subscribeOn(Schedulers.boundedElastic())

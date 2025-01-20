@@ -51,6 +51,7 @@ public class ImageGalleryPresenter {
     private final AtomicInteger processingThreads = new AtomicInteger(0);
     private int pagesDownloaded = 0;
     private boolean scrolledToEnd = false;
+    private String selectedDirectoryPath = "/";
 
     private final ImagePipeline imagePipeline;
     private final StageInitializer stageInitializer;
@@ -66,7 +67,7 @@ public class ImageGalleryPresenter {
         initializeSizeSlider();
         initializeTreeView();
         initializeOnScrollAction();
-        imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), getSelectedDirectoryPath())
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), selectedDirectoryPath)
                 .subscribe(this::fetchThumbnailsOnStart, this::showInitializationError);
     }
 
@@ -86,17 +87,17 @@ public class ImageGalleryPresenter {
     }
 
     private void initializeTreeView() {
+        dirSelectionView.getSelectionModel().selectFirst();
+        selectedDirectoryPath = getSelectedDirectoryPath();
+
         dirSelectionView.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 1) {
-                TreeItem<String> selectedItem = dirSelectionView.getSelectionModel().getSelectedItem();
-                List<String> path = new ArrayList<>();
-                if (!"Root".equals(selectedItem.getValue())) path.add(selectedItem.getValue());
-                while (selectedItem.getParent() != null && !"Root".equals(selectedItem.getParent().getValue())) {
-                    selectedItem = selectedItem.getParent();
-                    path.add(selectedItem.getValue());
+                String newSelectedDirectoryPath = getSelectedDirectoryPath();
+                if (!selectedDirectoryPath.equals(newSelectedDirectoryPath)) {
+                    selectedDirectoryPath = newSelectedDirectoryPath;
+                    logger.info("Selected directory: " + selectedDirectoryPath);
+                    refreshGridOnButton();
                 }
-                System.out.println("Selected item: " + String.join("/", path.reversed()) + '/');
-                refreshGridOnButton();
             }
         });
     }
@@ -110,7 +111,7 @@ public class ImageGalleryPresenter {
 
     // =========================== FETCHING NEXT THUMBNAILS ON SCROLL =================================
     private void fetchNextPageOfThumbnails() {
-        List<Image> imageList = imagePipeline.getThumbnails(thumbnailsSize.name(), getSelectedDirectoryPath(), pagesDownloaded, thumbnailsSize.getPageSize())
+        List<Image> imageList = imagePipeline.getThumbnails(thumbnailsSize.name(), selectedDirectoryPath, pagesDownloaded, thumbnailsSize.getPageSize())
                 .collectList()
                 .block();
         if (imageList == null) { logger.warning("Failed to load new thumbnails page!"); return; }
@@ -131,7 +132,7 @@ public class ImageGalleryPresenter {
         addStartPlaceholdersToGrid(Math.min(count, thumbnailsSize.getPageSize()));
         pagesDownloaded = 1;
         scrolledToEnd = false;
-        imagePipeline.getThumbnails(thumbnailsSize.toString(), getSelectedDirectoryPath(),0, thumbnailsSize.getPageSize())
+        imagePipeline.getThumbnails(thumbnailsSize.toString(), selectedDirectoryPath,0, thumbnailsSize.getPageSize())
                 .index()
                 .subscribe(image -> replacePlaceholderWithImage(image.getT2(), image.getT1().intValue()),
                         e -> logger.log(Level.SEVERE,"initializeThumbnailsOnStartError: " + e.getMessage()),
@@ -162,7 +163,7 @@ public class ImageGalleryPresenter {
     }
 
     private void removeUnnecessaryVBoxes() {
-        imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), getSelectedDirectoryPath())
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), selectedDirectoryPath)
                 .subscribe(
                         count -> {
                             if (count < imageVBoxes.size()) {
@@ -182,7 +183,7 @@ public class ImageGalleryPresenter {
 
     private void fetchMissingThumbnails() {
         logger.info("Fetching missing thumbnails");
-        imagePipeline.getThumbnailsExcludingList(thumbnailsSize.toString(), getSelectedDirectoryPath(), imageIds, imageVBoxes.size())
+        imagePipeline.getThumbnailsExcludingList(thumbnailsSize.toString(), selectedDirectoryPath, imageIds, imageVBoxes.size())
                 .subscribe(
                         image -> replacePlaceholderWithImage(image, emptyImageVBoxes.getFirst().getGridId()),
                         e -> logger.log(Level.SEVERE,"downloadAndUpdateThumbnailsError: " + e.getMessage()),
@@ -230,7 +231,7 @@ public class ImageGalleryPresenter {
     private void fetchThumbnailsAfterSizeChange() {
         pagesDownloaded = 1;
         scrolledToEnd = false;
-        imagePipeline.getThumbnails(thumbnailsSize.toString(), getSelectedDirectoryPath(), 0, thumbnailsSize.getPageSize())
+        imagePipeline.getThumbnails(thumbnailsSize.toString(), selectedDirectoryPath, 0, thumbnailsSize.getPageSize())
                 .subscribe(
                         image -> replacePlaceholderWithImage(image, addPlaceholderToGrid("Placing...")),
                         error -> Platform.runLater(() -> {
@@ -263,7 +264,7 @@ public class ImageGalleryPresenter {
         List<File> files = fileChooser.showOpenMultipleDialog(null);
         if (files != null) {
             try {
-                selectedImages = FilesToImagesConverter.convert(files);
+                selectedImages = FilesToImagesConverter.convert(files, selectedDirectoryPath);
                 filesSelectedLabel.setText("Selected " + selectedImages.size() + " images");
                 filesSelectedLabel.setVisible(true);
             } catch (IOException e) {
@@ -290,8 +291,8 @@ public class ImageGalleryPresenter {
             try {
                 ZipDataExtractor.ZipData zipData = ZipDataExtractor.extractZipData(file);
                 addDirectoryToTreeView(zipData.directory());
-                selectedImages = zipData.images();
-                filesSelectedLabel.setText("Selected zip file with " + selectedImages.size() + " images");
+                if (zipData.images().isEmpty()) filesSelectedLabel.setText("Selected zip file has no images!");
+                else { selectedImages = zipData.images(); filesSelectedLabel.setText("Selected zip file with " + selectedImages.size() + " images"); }
                 filesSelectedLabel.setVisible(true);
             } catch (IOException e) {
                 selectedImages = null;
@@ -336,19 +337,14 @@ public class ImageGalleryPresenter {
 
         List<Image> imagesCopy = selectedImages.stream().map(Image::copyOf).toList();
         List<Image> filteredImages = imagesCopy.stream()
-                .filter(image -> image.getDirectoryPath().equals(getSelectedDirectoryPath()))
+                .filter(image -> image.getDirectoryPath().equals(selectedDirectoryPath))
                 .toList();
 
-        int i = 0;
-        filteredImages.forEach(image -> image.setGridId(startCount + i));
+        for (int i = 0; i < filteredImages.size(); i++) filteredImages.get(i).setGridId(startCount + i);
+        List<String> filteredImagesNames = filteredImages.stream().map(Image::getName).toList();
+        addNamedPlaceholdersToGrid(filteredImagesNames);
 
-        addNamedPlaceholdersToGrid(
-                filteredImages.stream()
-                .map(Image::getName)
-                .toList()
-        );
-
-        imagePipeline.sendAndReceiveImages(imagesCopy, thumbnailsSize.toString(), getSelectedDirectoryPath())
+        imagePipeline.sendAndReceiveImages(imagesCopy, thumbnailsSize.toString(), selectedDirectoryPath)
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe(
                         image -> replacePlaceholderWithImage(image, image.getGridId()),
@@ -378,7 +374,7 @@ public class ImageGalleryPresenter {
         emptyImageVBoxes.clear();
         imageIds.clear();
 
-        imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), getSelectedDirectoryPath())
+        imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), selectedDirectoryPath)
                 .subscribe(
                         this::fetchThumbnailsOnStart,
                         error -> Platform.runLater(() -> {
@@ -424,9 +420,7 @@ public class ImageGalleryPresenter {
 
     private String getSelectedDirectoryPath() {
         TreeItem<String> selectedItem = dirSelectionView.getSelectionModel().getSelectedItem();
-        if (selectedItem == null || "Root".equals(selectedItem.getValue())) {
-            return "/";
-        }
+        if (selectedItem == null || "Root".equals(selectedItem.getValue())) return "/";
         List<String> path = new ArrayList<>();
         path.add(selectedItem.getValue());
         while (selectedItem.getParent() != null && !"Root".equals(selectedItem.getParent().getValue())) {

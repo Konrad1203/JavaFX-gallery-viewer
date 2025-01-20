@@ -15,13 +15,13 @@ import java.util.List;
 
 public interface FilesToImagesConverter {
 
-    static List<Image> convert(List<File> files) throws IOException {
+    static List<Image> convert(List<File> files, String dirPath) throws IOException {
         List<Image> images = new ArrayList<>();
-        for (File file : files) images.add(createFromFile(file));
+        for (File file : files) images.add(createFromFile(file, dirPath));
         return images;
     }
 
-    static Image createFromFile(File file) throws IOException {
+    static Image createFromFile(File file, String dirPath) throws IOException {
         String extensionType = getFileExtension(file.getName());
         int[] size = getImageDimensions(file, extensionType);
 
@@ -31,6 +31,7 @@ public interface FilesToImagesConverter {
                 .width(size[0])
                 .height(size[1])
                 .data(Files.readAllBytes(file.toPath()))
+                .directoryPath(dirPath)
                 .build();
     }
 
