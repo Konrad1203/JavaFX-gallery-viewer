@@ -119,9 +119,14 @@ public class ImageService {
     @Transactional
     public void deleteImagesFromDirectory(String directoryPath) {
         List<Integer> ids = imageRepository.findAllIdsByDirectoryPath(directoryPath);
-        thumbnailRepository.deleteAllByImageIdIn(ids);
-        imageRepository.deleteAllById(ids);
+        deleteImagesWithId(ids);
         removeDirectoryFromTree(directoryPath);
+    }
+
+    @Transactional
+    public void deleteImagesWithId(List<Integer> imageIds) {
+        thumbnailRepository.deleteAllByImageIdIn(imageIds);
+        imageRepository.deleteAllById(imageIds);
     }
 
     private void removeDirectoryFromTree(String directoryPath) {
@@ -296,5 +301,10 @@ public class ImageService {
         } catch (IOException e) {
             logger.log(Level.WARNING, "Error writing directory tree to file: " + e.getMessage());
         }
+    }
+
+    @Transactional
+    public void moveImagesToDirectory(List<Integer> imageIds, String directoryPath) {
+        imageRepository.updateDirectoryPathForIds(imageIds, directoryPath);
     }
 }

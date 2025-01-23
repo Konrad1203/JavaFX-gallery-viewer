@@ -88,6 +88,16 @@ public class ServerClient {
                 .subscribe();
     }
 
+    public void deleteImagesWithId(List<Integer> imageIds) {
+        webClient.post()
+                .uri("/images/deleteImages")
+                .bodyValue(imageIds)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .doOnError(e -> logger.log(Level.SEVERE, "deleteImagesWithIdError: " + e.getMessage()))
+                .block();
+    }
+
     public void postDirectoryTree(ZipDataExtractor.Directory directory) {
         webClient.post()
                 .uri("/images/directoryTree")
@@ -99,7 +109,13 @@ public class ServerClient {
     }
 
     public void moveSelectedImagesToDirectory(List<Integer> imageIds, String directoryPath) {
-        // TODO: implement image transfer between directories
+        webClient.post()
+                .uri("/images/moveImages?directoryPath={directoryPath}", directoryPath)
+                .bodyValue(imageIds)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .doOnError(e -> logger.log(Level.SEVERE, "moveSelectedImagesToDirectoryError: " + e.getMessage()))
+                .block();
     }
 }
 

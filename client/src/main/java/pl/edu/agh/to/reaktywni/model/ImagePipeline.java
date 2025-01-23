@@ -69,6 +69,10 @@ public class ImagePipeline {
         serverClient.deleteDirectoryWithImages(directoryPath);
     }
 
+    public void deleteImagesWithId(List<Integer> imageIds) {
+        serverClient.deleteImagesWithId(imageIds);
+    }
+
     public void postDirectoryTree(ZipDataExtractor.Directory directory) {
         serverClient.postDirectoryTree(directory);
     }

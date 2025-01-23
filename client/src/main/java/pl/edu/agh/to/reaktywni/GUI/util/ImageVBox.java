@@ -3,6 +3,7 @@ package pl.edu.agh.to.reaktywni.GUI.util;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
@@ -65,8 +66,10 @@ public class ImageVBox extends VBox {
             nameLabel.setText(image.getName());
             imageView.setImage(new javafx.scene.image.Image(new ByteArrayInputStream(image.getData()), size.getImageWidth(), size.getImageHeight(), false, false));
             setOnMouseClicked(event -> {
-                if (event.getClickCount() == 1) onSingleClickSelectionEvent(event, presenter);
-                else if (event.getClickCount() == 2) presenter.openBigImageView(image.getId());
+                if (event.getButton().equals(MouseButton.PRIMARY)) {
+                    if (event.getClickCount() == 1) onSingleClickSelectionEvent(event, presenter);
+                    else if (event.getClickCount() == 2) presenter.openBigImageView(image.getId());
+                }
             });
         } else if (image.getImageState() == ImageState.PENDING) {
             nameLabel.setText("............");

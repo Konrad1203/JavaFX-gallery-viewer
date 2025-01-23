@@ -69,6 +69,7 @@ public class ImageGalleryPresenter {
         initializeSizeSlider();
         initializeTreeView();
         initializeOnScrollAction();
+        initializeContextMenuInGridPane();
         imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), selectedDirectoryPath)
                 .subscribe(this::fetchThumbnailsOnStart, this::showInitializationError);
     }
@@ -98,7 +99,7 @@ public class ImageGalleryPresenter {
             logger.log(Level.SEVERE, "Failed to load directory tree: " + e.getMessage());
         }
         dirSelectionView.setOnMouseClicked(mouseEvent -> {
-            if (mouseEvent.getClickCount() == 1) {
+            if (mouseEvent.getClickCount() == 1 && mouseEvent.getButton().equals(javafx.scene.input.MouseButton.PRIMARY)) {
                 String newSelectedDirectoryPath = getSelectedDirectoryPath();
                 if (!selectedDirectoryPath.equals(newSelectedDirectoryPath)) {
                     selectedDirectoryPath = newSelectedDirectoryPath;
@@ -144,12 +145,12 @@ public class ImageGalleryPresenter {
     }
 
     private MenuItem getMoveImagesItemForContextMenu(TreeCell<String> cell) {
-        MenuItem moveImagesItem = new MenuItem("Move selected images to this directory (NOT IMPLEMENTED)");
+        MenuItem moveImagesItem = new MenuItem("Move selected images to this directory");
         moveImagesItem.setOnAction(event -> {
-            System.out.println("Move selected images to this directory: " + cell.getItem());
-            imagePipeline.moveSelectedImagesToDirectory(getSelectedImageIds(), getDirectoryPath(cell.getTreeItem()));
-            refreshGridOnButton();
-            // TODO: implement removing selected images
+            if (!selection.isEmpty()) {
+                imagePipeline.moveSelectedImagesToDirectory(getSelectedImageIds(), getDirectoryPath(cell.getTreeItem()));
+                refreshGridOnButton();
+            }
         });
         return moveImagesItem;
     }
@@ -169,6 +170,24 @@ public class ImageGalleryPresenter {
     private void initializeOnScrollAction() {
         scrollPane.vvalueProperty().addListener((observable, oldValue, newValue) -> {
             if (!scrolledToEnd && newValue.doubleValue() == 1.0) fetchNextPageOfThumbnails();
+        });
+    }
+
+    private void initializeContextMenuInGridPane() {
+        gridPane.setOnMouseClicked(event -> {
+            if (!selection.isEmpty() && event.getClickCount() == 1 && event.getButton().equals(javafx.scene.input.MouseButton.SECONDARY)) {
+                ContextMenu contextMenu = new ContextMenu();
+                MenuItem removeImagesItem = new MenuItem("Remove selected " + selection.size() + " images");
+                removeImagesItem.setOnAction(e -> {
+                    imagePipeline.deleteImagesWithId(getSelectedImageIds());
+                    refreshGridOnButton();
+                });
+                MenuItem clearSelectionItem = new MenuItem("Clear selection");
+                clearSelectionItem.setOnAction(e -> clearSelection());
+                contextMenu.setOnShown(e -> contextMenu.getScene().setOnMouseExited(exitEvent -> contextMenu.hide()));
+                contextMenu.getItems().addAll(removeImagesItem, clearSelectionItem);
+                contextMenu.show(gridPane, event.getScreenX(), event.getScreenY());
+            }
         });
     }
     // ================================================================================================

@@ -1,6 +1,7 @@
 package pl.edu.agh.to.reaktywni.image;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -19,4 +20,8 @@ public interface ImageRepository extends JpaRepository<Image, Integer> {
 
     @Query("SELECT i.id FROM Image i WHERE i.directoryPath = :directoryPath")
     List<Integer> findAllIdsByDirectoryPath(String directoryPath);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Image i SET i.directoryPath = :directoryPath WHERE i.id IN :ids")
+    void updateDirectoryPathForIds(List<Integer> ids, String directoryPath);
 }
