@@ -4,3 +4,16 @@
     -fx-background-repeat: no-repeat;
     -fx-background-position: center;
 }
+
+.image-name {
+    -fx-font-size: 12;
+}
+
+.image-vbox-selected {
+    -fx-background-color: #707070;
+    -fx-fill: #ffffff;
+    -fx-background-radius: 10;
+    -fx-background-insets: -10 -8 -2 -8;
+    -fx-border-color: transparent;
+    -fx-border-radius: 10;
+}

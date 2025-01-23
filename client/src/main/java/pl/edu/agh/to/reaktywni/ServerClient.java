@@ -97,6 +97,10 @@ public class ServerClient {
                 .doOnError(e -> logger.log(Level.SEVERE, "postDirectoryTreeError: " + e.getMessage()))
                 .subscribe();
     }
+
+    public void moveSelectedImagesToDirectory(List<Integer> imageIds, String directoryPath) {
+        // TODO: implement image transfer between directories
+    }
 }
 
 

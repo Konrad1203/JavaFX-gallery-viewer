@@ -72,4 +72,8 @@ public class ImagePipeline {
     public void postDirectoryTree(ZipDataExtractor.Directory directory) {
         serverClient.postDirectoryTree(directory);
     }
+
+    public void moveSelectedImagesToDirectory(List<Integer> imageIds, String directoryPath) {
+        serverClient.moveSelectedImagesToDirectory(imageIds, directoryPath);
+    }
 }

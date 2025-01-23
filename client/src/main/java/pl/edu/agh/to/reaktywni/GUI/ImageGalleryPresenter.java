@@ -44,7 +44,7 @@ public class ImageGalleryPresenter {
     @FXML private GridPane gridPane;
     private Stage selectionStage;
 
-    private List<Image> selectedImages;
+    private List<Image> clientImagesToSend;
     private ThumbnailSize thumbnailsSize;
     private final List<ImageVBox> imageVBoxes = new ArrayList<>();
     private final List<ImageVBox> emptyImageVBoxes = new LinkedList<>();
@@ -53,6 +53,7 @@ public class ImageGalleryPresenter {
     private int pagesDownloaded = 0;
     private boolean scrolledToEnd = false;
     private String selectedDirectoryPath = "/";
+    private final Set<ImageVBox> selection = new HashSet<>();
 
     private final ImagePipeline imagePipeline;
     private final StageInitializer stageInitializer;
@@ -146,8 +147,9 @@ public class ImageGalleryPresenter {
         MenuItem moveImagesItem = new MenuItem("Move selected images to this directory (NOT IMPLEMENTED)");
         moveImagesItem.setOnAction(event -> {
             System.out.println("Move selected images to this directory: " + cell.getItem());
-            // TODO implement images selection and image transfer between directories
-            // TODO implement removing selected images
+            imagePipeline.moveSelectedImagesToDirectory(getSelectedImageIds(), getDirectoryPath(cell.getTreeItem()));
+            refreshGridOnButton();
+            // TODO: implement removing selected images
         });
         return moveImagesItem;
     }
@@ -274,6 +276,7 @@ public class ImageGalleryPresenter {
         imageVBoxes.clear();
         emptyImageVBoxes.clear();
         imageIds.clear();
+        selection.clear();
     }
 
     private void modifyGridPaneRowAndColCount() {
@@ -326,11 +329,11 @@ public class ImageGalleryPresenter {
         List<File> files = fileChooser.showOpenMultipleDialog(null);
         if (files != null) {
             try {
-                selectedImages = FilesToImagesConverter.convert(files, selectedDirectoryPath);
-                filesSelectedLabel.setText("Selected " + selectedImages.size() + " images");
+                clientImagesToSend = FilesToImagesConverter.convert(files, selectedDirectoryPath);
+                filesSelectedLabel.setText("Selected " + clientImagesToSend.size() + " images");
                 filesSelectedLabel.setVisible(true);
             } catch (IOException e) {
-                selectedImages = null;
+                clientImagesToSend = null;
                 logger.warning("Image processing error: " + e.getMessage());
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Image processing error");
@@ -355,18 +358,18 @@ public class ImageGalleryPresenter {
                 addDirectoryToTreeView(zipData.directory());
                 if (zipData.images().isEmpty()) filesSelectedLabel.setText("Selected zip file has no images!");
                 else {
-                    selectedImages = zipData.images();
-                    filesSelectedLabel.setText("Selected zip file with " + selectedImages.size() + " images");
+                    clientImagesToSend = zipData.images();
+                    filesSelectedLabel.setText("Selected zip file with " + clientImagesToSend.size() + " images");
                     try {
                         String json = zipData.directory().toJson();
-                        selectedImages.addFirst(Image.createDirectoryDataPacket(json));
+                        clientImagesToSend.addFirst(Image.createDirectoryDataPacket(json));
                     } catch (JsonProcessingException e) {
                         logger.log(Level.SEVERE, "Json processing error: " + e.getMessage());
                     }
                 }
                 filesSelectedLabel.setVisible(true);
             } catch (IOException e) {
-                selectedImages = null;
+                clientImagesToSend = null;
                 logger.warning("Zip file processing error: " + e.getMessage());
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Zip file processing error");
@@ -408,12 +411,12 @@ public class ImageGalleryPresenter {
 
     @FXML
     private void sendAndReceiveImages() {
-        if (selectedImages == null) return;
+        if (clientImagesToSend == null) return;
         processingThreads.incrementAndGet();
         if (!scrolledToEnd && processingThreads.get() == 1) scrollToEnd();
         int startCount = imageVBoxes.size();
 
-        List<Image> imagesCopy = selectedImages.stream().map(Image::copyOf).toList();
+        List<Image> imagesCopy = clientImagesToSend.stream().map(Image::copyOf).toList();
         List<Image> filteredImages = imagesCopy.stream()
                 .filter(image -> selectedDirectoryPath.equals(image.getDirectoryPath()))
                 .toList();
@@ -460,11 +463,7 @@ public class ImageGalleryPresenter {
     // ============================== REFRESH BUTTON HANDLING =========================================
     @FXML
     private void refreshGridOnButton() {
-        gridPane.getChildren().clear();
-        imageVBoxes.clear();
-        emptyImageVBoxes.clear();
-        imageIds.clear();
-
+        removeImageVBoxes();
         imagePipeline.getThumbnailsCount(thumbnailsSize.toString(), selectedDirectoryPath)
                 .subscribe(
                         this::fetchThumbnailsOnStart,
@@ -506,7 +505,7 @@ public class ImageGalleryPresenter {
         } else {
             emptyImageVBoxes.addLast(imageVBox);
         }
-        Platform.runLater(() -> imageVBox.placeImage(thumbnailsSize, image, stageInitializer, imagePipeline));
+        Platform.runLater(() -> imageVBox.placeImage(thumbnailsSize, image, this));
     }
 
     private String getDirectoryPath(TreeItem<String> selectedItem) {
@@ -523,6 +522,32 @@ public class ImageGalleryPresenter {
 
     private String getSelectedDirectoryPath() {
         return getDirectoryPath(dirSelectionView.getSelectionModel().getSelectedItem());
+    }
+    // ================================================================================================
+
+    // ==================================== IMAGE VBOX INTEGRATION ====================================
+    public void openBigImageView(int imageId) {
+        stageInitializer.openBigImageView(imagePipeline.getFullImage(imageId));
+    }
+
+    public void addToSelection(ImageVBox imageVBox, boolean multipleSelection) {
+        if (!multipleSelection) clearSelection();
+        selection.add(imageVBox);
+    }
+
+    public boolean removeFromSelection(ImageVBox imageVBox, boolean multipleSelection) {
+        selection.remove(imageVBox);
+        if (multipleSelection) return true;
+        else { clearSelection(); selection.add(imageVBox); return false; }
+    }
+
+    private void clearSelection() {
+        selection.forEach(ImageVBox::disableSelection);
+        selection.clear();
+    }
+
+    private List<Integer> getSelectedImageIds() {
+        return selection.stream().map(ImageVBox::getImageId).toList();
     }
     // ================================================================================================
 }
