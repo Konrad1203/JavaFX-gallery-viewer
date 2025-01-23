@@ -115,33 +115,53 @@ public class ImageGalleryPresenter {
                 }
             };
             ContextMenu contextMenu = new ContextMenu();
-
-            MenuItem addItem = new MenuItem("Add new directory inside this directory (NOT IMPLEMENTED)");
-            addItem.setOnAction(event -> {
-                System.out.println("Add new directory inside " + cell.getItem());
-                // TODO implement adding new directory
-            });
-
-            MenuItem moveImagesItem = new MenuItem("Move selected images to this directory (NOT IMPLEMENTED)");
-            moveImagesItem.setOnAction(event -> {
-                System.out.println("Move selected images to this directory: " + cell.getItem());
-                // TODO implement moving images
-            });
-            MenuItem removeItem = new MenuItem("Remove this directory with images");
-            removeItem.setOnAction(event -> {
-                dirSelectionView.getSelectionModel().selectFirst();
-                selectedDirectoryPath = getSelectedDirectoryPath();
-                imagePipeline.deleteDirectoryWithImages(getDirectoryPath(cell.getTreeItem()));
-                removeDirectoryFromTreeView(cell.getTreeItem());
-                refreshGridOnButton();
-            });
-            contextMenu.getItems().addAll(addItem, moveImagesItem, removeItem);
-
+            contextMenu.getItems().addAll(
+                    getAddItemForContextMenu(cell),
+                    getMoveImagesItemForContextMenu(cell),
+                    getRemoveItemForContextMenu(cell)
+            );
             cell.setOnContextMenuRequested(event -> {
                 if (!cell.isEmpty()) contextMenu.show(cell, event.getScreenX(), event.getScreenY());
             });
             return cell;
         });
+    }
+
+    private MenuItem getAddItemForContextMenu(TreeCell<String> cell) {
+        MenuItem addItem = new MenuItem("Add new directory inside this directory");
+        addItem.setOnAction(event -> {
+            String path = getDirectoryPath(cell.getTreeItem());
+            Optional<String> result = stageInitializer.getDirectoryNameDialog(path).showAndWait();
+            result.ifPresent(name -> {
+                ZipDataExtractor.Directory directory = ZipDataExtractor.Directory.createRoot();
+                directory.addSubdirectory(path + name + "/");
+                addDirectoryToTreeView(directory);
+                imagePipeline.postDirectoryTree(directory);
+            });
+        });
+        return addItem;
+    }
+
+    private MenuItem getMoveImagesItemForContextMenu(TreeCell<String> cell) {
+        MenuItem moveImagesItem = new MenuItem("Move selected images to this directory (NOT IMPLEMENTED)");
+        moveImagesItem.setOnAction(event -> {
+            System.out.println("Move selected images to this directory: " + cell.getItem());
+            // TODO implement images selection and image transfer between directories
+            // TODO implement removing selected images
+        });
+        return moveImagesItem;
+    }
+
+    private MenuItem getRemoveItemForContextMenu(TreeCell<String> cell) {
+        MenuItem removeItem = new MenuItem("Remove this directory with images");
+        removeItem.setOnAction(event -> {
+            dirSelectionView.getSelectionModel().selectFirst();
+            selectedDirectoryPath = getSelectedDirectoryPath();
+            imagePipeline.deleteDirectoryWithImages(getDirectoryPath(cell.getTreeItem()));
+            removeDirectoryFromTreeView(cell.getTreeItem());
+            refreshGridOnButton();
+        });
+        return removeItem;
     }
 
     private void initializeOnScrollAction() {

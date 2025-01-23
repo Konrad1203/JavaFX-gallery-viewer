@@ -37,7 +37,11 @@ public interface ZipDataExtractor {
             for (String directoryName : path.split("/")) {
                 if (directoryName.isBlank()) continue;
                 Optional<Directory> existingDir = findDirectoryWithName(currSubDirs, directoryName);
-                if (existingDir.isEmpty()) currSubDirs.add(new Directory(directoryName));
+                if (existingDir.isEmpty()) {
+                    Directory newDirectory = new Directory(directoryName);
+                    currSubDirs.add(newDirectory);
+                    currSubDirs = newDirectory.subdirectories;
+                }
                 else currSubDirs = existingDir.get().subdirectories;
             }
         }

@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.springframework.context.ApplicationContext;
@@ -79,6 +80,14 @@ public class StageInitializer {
         root.getChildren().add(button2);
         stage.setScene(scene);
         return stage;
+    }
+
+    public TextInputDialog getDirectoryNameDialog(String path) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("New directory name dialog");
+        dialog.setHeaderText("Enter directory name to create in " + path);
+        dialog.setContentText("Name:");
+        return dialog;
     }
 }
 

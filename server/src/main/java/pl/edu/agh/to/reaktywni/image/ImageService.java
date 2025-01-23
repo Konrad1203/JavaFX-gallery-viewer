@@ -289,6 +289,7 @@ public class ImageService {
     }
 
     public void mergeToDirectoryTree(Directory directory) {
+        logger.info("Received directory: " + directory);
         directoryTree.merge(directory);
         try {
             JsonFileReaderWriter.write(directoryTree.toJson());
