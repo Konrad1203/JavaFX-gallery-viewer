@@ -77,6 +77,16 @@ public class ServerClient {
                 .bodyToMono(ZipDataExtractor.Directory.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "getDirectoryTreeError: " + e.getMessage()));
     }
+
+    public void deleteDirectoryWithImages(String directoryPath) {
+        webClient.post()
+                .uri("/images/deleteDirectory")
+                .bodyValue(directoryPath)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .doOnError(e -> logger.log(Level.SEVERE, "deleteDirectoryWithImagesError: " + e.getMessage()))
+                .subscribe();
+    }
 }
 
 

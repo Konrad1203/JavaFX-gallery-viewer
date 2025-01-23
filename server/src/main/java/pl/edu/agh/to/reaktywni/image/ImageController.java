@@ -35,10 +35,20 @@ public class ImageController {
         return imageService.processImages(images, size, directoryPath);
     }
 
+    @PostMapping("/deleteDirectory")
+    public void deleteImages(@RequestBody String directoryPath) {
+        imageService.deleteImagesFromDirectory(directoryPath);
+    }
+
     @GetMapping("/directoryTree")
     public Mono<Directory> getDirectoryTree() {
         return imageService.getDirectoryTree()
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No directory tree found")));
+    }
+
+    @PostMapping("/directoryTree")
+    public void postDirectoryTree(@RequestBody Directory directory) {
+        imageService.mergeToDirectoryTree(directory);
     }
 }
 

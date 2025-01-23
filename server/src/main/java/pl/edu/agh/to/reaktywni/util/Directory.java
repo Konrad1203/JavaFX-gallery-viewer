@@ -45,6 +45,21 @@ public record Directory(String name, TreeSet<Directory> subdirectories) implemen
         }
     }
 
+    public void removeDirectory(String directoryPath) {
+        TreeSet<Directory> currSubDirs = subdirectories;
+        String[] directoryNames = directoryPath.split("/");
+        int lastIndex = directoryNames.length - 1;
+        for (int i = 0; i <= lastIndex; i++) {
+            if (directoryNames[i].isBlank()) continue;
+            Optional<Directory> existingDir = findDirectoryWithName(currSubDirs, directoryNames[i]);
+            if (existingDir.isEmpty()) break;
+            if (i == lastIndex) {
+                currSubDirs.remove(existingDir.get());
+                break;
+            } else currSubDirs = existingDir.get().subdirectories;
+        }
+    }
+
     @Override
     public int compareTo(Directory o) {
         return name.compareTo(o.name);

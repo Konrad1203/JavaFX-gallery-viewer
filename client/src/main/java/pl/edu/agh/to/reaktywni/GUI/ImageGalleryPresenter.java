@@ -90,10 +90,12 @@ public class ImageGalleryPresenter {
     private void initializeTreeView() {
         dirSelectionView.getSelectionModel().selectFirst();
         selectedDirectoryPath = getSelectedDirectoryPath();
-
-        imagePipeline.getDirectoryTree().blockOptional()
-                .ifPresent(this::addDirectoryToTreeView);
-
+        try {
+            imagePipeline.getDirectoryTree().blockOptional()
+                    .ifPresent(this::addDirectoryToTreeView);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Failed to load directory tree: " + e.getMessage());
+        }
         dirSelectionView.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 1) {
                 String newSelectedDirectoryPath = getSelectedDirectoryPath();
@@ -103,6 +105,42 @@ public class ImageGalleryPresenter {
                     refreshGridOnButton();
                 }
             }
+        });
+        dirSelectionView.setCellFactory(tree -> {
+            TreeCell<String> cell = new TreeCell<>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    setText(empty ? null : item);
+                }
+            };
+            ContextMenu contextMenu = new ContextMenu();
+
+            MenuItem addItem = new MenuItem("Add new directory inside this directory (NOT IMPLEMENTED)");
+            addItem.setOnAction(event -> {
+                System.out.println("Add new directory inside " + cell.getItem());
+                // TODO implement adding new directory
+            });
+
+            MenuItem moveImagesItem = new MenuItem("Move selected images to this directory (NOT IMPLEMENTED)");
+            moveImagesItem.setOnAction(event -> {
+                System.out.println("Move selected images to this directory: " + cell.getItem());
+                // TODO implement moving images
+            });
+            MenuItem removeItem = new MenuItem("Remove this directory with images");
+            removeItem.setOnAction(event -> {
+                dirSelectionView.getSelectionModel().selectFirst();
+                selectedDirectoryPath = getSelectedDirectoryPath();
+                imagePipeline.deleteDirectoryWithImages(getDirectoryPath(cell.getTreeItem()));
+                removeDirectoryFromTreeView(cell.getTreeItem());
+                refreshGridOnButton();
+            });
+            contextMenu.getItems().addAll(addItem, moveImagesItem, removeItem);
+
+            cell.setOnContextMenuRequested(event -> {
+                if (!cell.isEmpty()) contextMenu.show(cell, event.getScreenX(), event.getScreenY());
+            });
+            return cell;
         });
     }
 
@@ -341,6 +379,13 @@ public class ImageGalleryPresenter {
         }
     }
 
+    private void removeDirectoryFromTreeView(TreeItem<String> selectedItem) {
+        if (selectedItem == null) return;
+        TreeItem<String> parent = selectedItem.getParent();
+        if (parent == null) return;
+        parent.getChildren().remove(selectedItem);
+    }
+
     @FXML
     private void sendAndReceiveImages() {
         if (selectedImages == null) return;
@@ -444,8 +489,7 @@ public class ImageGalleryPresenter {
         Platform.runLater(() -> imageVBox.placeImage(thumbnailsSize, image, stageInitializer, imagePipeline));
     }
 
-    private String getSelectedDirectoryPath() {
-        TreeItem<String> selectedItem = dirSelectionView.getSelectionModel().getSelectedItem();
+    private String getDirectoryPath(TreeItem<String> selectedItem) {
         if (selectedItem == null || "Root".equals(selectedItem.getValue())) return "/";
         List<String> path = new ArrayList<>();
         path.add(selectedItem.getValue());
@@ -455,6 +499,10 @@ public class ImageGalleryPresenter {
         }
         Collections.reverse(path);
         return "/" + String.join("/", path) + "/";
+    }
+
+    private String getSelectedDirectoryPath() {
+        return getDirectoryPath(dirSelectionView.getSelectionModel().getSelectedItem());
     }
     // ================================================================================================
 }

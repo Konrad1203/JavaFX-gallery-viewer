@@ -2,6 +2,7 @@ package pl.edu.agh.to.reaktywni.image;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
@@ -63,7 +64,7 @@ public class ImageService {
     }
 
     public Flux<Image> getThumbnails(String size, String directoryPath, Pageable pageable) {
-        return Mono.fromCallable(() -> thumbnailRepository.getBySizeAndPath(ThumbnailSize.valueOf(size), directoryPath, pageable))
+        return Mono.fromCallable(() -> thumbnailRepository.findBySizeAndPath(ThumbnailSize.valueOf(size), directoryPath, pageable))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
                 .map(thumbnail -> createImageFromThumbnail(thumbnail, directoryPath))
@@ -73,7 +74,7 @@ public class ImageService {
     }
 
     public Flux<Image> getThumbnailsExcludingList(String size, String directoryPath, List<Integer> ids, int elemCount) {
-        return Mono.fromCallable(() -> thumbnailRepository.getBySizeAndPathExcludingList(ThumbnailSize.valueOf(size), directoryPath, ids, elemCount))
+        return Mono.fromCallable(() -> thumbnailRepository.findBySizeAndPathAndImageIdNotIn(ThumbnailSize.valueOf(size), directoryPath, ids, elemCount))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
                 .map(thumbnail -> createImageFromThumbnail(thumbnail, directoryPath))
@@ -112,6 +113,23 @@ public class ImageService {
         } catch (JsonProcessingException e) {
             logger.log(Level.SEVERE, "Error creating directory data packet: " + e.getMessage());
             return thumbnails;
+        }
+    }
+
+    @Transactional
+    public void deleteImagesFromDirectory(String directoryPath) {
+        List<Integer> ids = imageRepository.findAllIdsByDirectoryPath(directoryPath);
+        thumbnailRepository.deleteAllByImageIdIn(ids);
+        imageRepository.deleteAllById(ids);
+        removeDirectoryFromTree(directoryPath);
+    }
+
+    private void removeDirectoryFromTree(String directoryPath) {
+        directoryTree.removeDirectory(directoryPath);
+        try {
+            JsonFileReaderWriter.write(directoryTree.toJson());
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Error writing directory tree to file: " + e.getMessage());
         }
     }
 
@@ -161,7 +179,7 @@ public class ImageService {
 
     private Mono<Thumbnail> updateEmptyThumbnail(Thumbnail readyThumbnail, Image image, ThumbnailSize thumbnailSize) {
         return Mono.fromCallable(() -> {
-            Thumbnail emptyThumbnail = thumbnailRepository.getByImageIdAndSize(image.getId(), thumbnailSize);
+            Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getId(), thumbnailSize);
             if (readyThumbnail.getState().equals(ImageState.SUCCESS)) {
                 emptyThumbnail.setData(readyThumbnail.getData());
             } else {
@@ -175,7 +193,7 @@ public class ImageService {
 
     private Mono<Thumbnail> updateEmptyThumbnailOnError(Image image, ThumbnailSize thumbnailSize) {
         return Mono.fromCallable(() -> {
-            Thumbnail emptyThumbnail = thumbnailRepository.getByImageIdAndSize(image.getId(), thumbnailSize);
+            Thumbnail emptyThumbnail = thumbnailRepository.findByImageIdAndSize(image.getId(), thumbnailSize);
             emptyThumbnail.setFailure();
             thumbnailRepository.save(emptyThumbnail);
             return emptyThumbnail;
@@ -208,7 +226,7 @@ public class ImageService {
     }
 
     private void saveMissingThumbnails(int imageId) {
-        List<ThumbnailSize> existingSizes = thumbnailRepository.getByImageId(imageId).stream()
+        List<ThumbnailSize> existingSizes = thumbnailRepository.findByImageId(imageId).stream()
                 .map(Thumbnail::getSize)
                 .toList();
         List<Thumbnail> missingThumbnails = Arrays.stream(ThumbnailSize.values())
@@ -225,7 +243,7 @@ public class ImageService {
     }
 
     private void reprocessPendingThumbnails(ImageState state) {
-        Flux.fromIterable(thumbnailRepository.getByStateWithImages(state))
+        Flux.fromIterable(thumbnailRepository.findByStateWithImages(state))
                 .doOnNext(this::logReprocessing)
                 .flatMap(thumbnail -> Mono.fromCallable(thumbnail::getImage)
                         .subscribeOn(Schedulers.boundedElastic())
@@ -268,5 +286,14 @@ public class ImageService {
 
     public Mono<Directory> getDirectoryTree() {
         return Mono.just(directoryTree);
+    }
+
+    public void mergeToDirectoryTree(Directory directory) {
+        directoryTree.merge(directory);
+        try {
+            JsonFileReaderWriter.write(directoryTree.toJson());
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Error writing directory tree to file: " + e.getMessage());
+        }
     }
 }

@@ -16,4 +16,7 @@ public interface ImageRepository extends JpaRepository<Image, Integer> {
     @Query("SELECT i.id FROM Image i LEFT JOIN Thumbnail t ON i.id = t.image.id " +
             "GROUP BY i.id having count(t.id) != :sizesCount")
     List<Integer> findAllIdsWithMissingThumbnails(int sizesCount);
+
+    @Query("SELECT i.id FROM Image i WHERE i.directoryPath = :directoryPath")
+    List<Integer> findAllIdsByDirectoryPath(String directoryPath);
 }

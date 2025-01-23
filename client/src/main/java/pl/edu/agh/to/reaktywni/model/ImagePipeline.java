@@ -64,4 +64,8 @@ public class ImagePipeline {
     public Mono<ZipDataExtractor.Directory> getDirectoryTree() {
         return serverClient.getDirectoryTree();
     }
+
+    public void deleteDirectoryWithImages(String directoryPath) {
+        serverClient.deleteDirectoryWithImages(directoryPath);
+    }
 }
