@@ -8,9 +8,9 @@
 
 ## 7.12.2023 - Basic Ideas
 
-<p align="center">
+<div style="text-align: center;">
     <img src="md-images/db.png" alt="alt text">
-</p>
+</div>
 
 Technologies
 - Spring-boot
@@ -19,9 +19,9 @@ Technologies
 - webClient
 - JDBC for database
 
-<p align="center">
+<div style="text-align: center;">
     <img src="md-images/diagram1.png" alt="class diagram 1">
-</p>
+</div>
 
 ## 13.12.2023 - First Milestone
 
@@ -61,9 +61,9 @@ Technologies
     - Logic responsible for resizing image
 
 ### Class diagram
-<p align="center">
+<div style="text-align: center;">
     <img src="md-images/diagram2.png" alt="class diagram 2">
-</p>
+</div>
 
 
 ## 20.12.2024 - First Milestone (after review fixes)
@@ -95,9 +95,9 @@ Technologies
 - Changed test checking with StepVerifier, expectNextMatches and verifyComplete
 
 ### Class diagram
-<p align="center">
+<div style="text-align: center;">
     <img src="md-images/diagram3.png" alt="class diagram 3">
-</p>
+</div>
 
 
 ## 3.01.2025 - Second Milestone
@@ -140,6 +140,54 @@ Technologies
 - Fixed tests to work with new features
 
 ### Class diagram
-<p align="center">
+<div style="text-align: center;">
     <img src="md-images/diagram4.png" alt="class diagram 4">
-</p>
+</div>
+
+
+## 10.01.2025 - Second Milestone (after review fixes)
+
+### Client
+- ImageGalleryPresenter overhaul
+- Removed grid position calculation from FilesToImagesConverter
+- Added app title and icon
+- Added refresh button with icon
+
+### Server
+- StartupConfig CommandLineRunner replaced with ThumbnailReprocess postConstruct initialization
+- Extracted ThumbnailController from ImageController
+- Replaced ImageMetaData record with projection interface
+- Optimized createEmptyThumbnailsIfMissing() to fetch only image ids of missing thumbnails
+- Added new method in ThumbnailSize: isValidSize() to check if string can be parsed to ThumbnailSize
+
+
+## 24.01.2025 - Third Milestone
+
+### Client
+- Implemented selection feature:
+  - ImageVBox has selected attribute with selection handling in ImageGalleryPresenter
+- ThumbnailSize enum has new attribute: pageSize
+- ImageGalleryPresenter changes:
+    - Added TreeView for directories
+    - Added attributes: pagesDownloaded, scrolledToEnd, selectedDirectoryPath, selection
+    - Added TreeView initialization with fetching directory structure
+    - Added context menu with adding and deleting directory, transferring images between directories
+    - Implemented fetching new pages after scrolling to the end
+    - Added context menu for gridPane with deleting selected images and clearing selection
+    - Replaced scheduled fetchNewThumbnails() with removeUnnecessaryVBoxes() and fetchMissingThumbnails()
+    - Added sending images window to choose between zip file or images group
+    - Added methods to add and remove directories in tree view
+    - Added sending and receiving directory structure to and from server
+    - Added handling selection in gridPane
+- Added files selection stage and directory name input dialog
+- Image has new attribute: directoryPath
+- Added new ImageState: DIR_DATA_PACKET to send directory structure inside Image object
+- Added new class ZipDataExtractor to extract zip file to Image objects and directory tree
+
+### Server
+- Image has new attribute: directoryPath
+- Added new ImageState: DIR_DATA_PACKET to send directory structure inside Image object
+- controllers use directoryPath as argument to fetch images in given directory
+- Added endpoints for handling directory structure and transferring images between directories
+- Implemented pageable fetching of images in directory in ThumbnailRepository
+- Added directory class to handle directory structure with JsonFileReaderWriter to save and load directories
