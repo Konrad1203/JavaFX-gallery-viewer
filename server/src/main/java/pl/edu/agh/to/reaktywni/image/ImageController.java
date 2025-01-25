@@ -5,7 +5,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailSize;
-import pl.edu.agh.to.reaktywni.util.Directory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -37,28 +36,12 @@ public class ImageController {
         return imageService.processImages(images, size, directoryPath);
     }
 
-    @PostMapping("/deleteDirectory")
-    public void deleteImages(@RequestBody String directoryPath) {
-        imageService.deleteImagesFromDirectory(directoryPath);
+    @DeleteMapping
+    public void deleteImages(@RequestParam List<Integer> ids) {
+        imageService.deleteImagesWithId(ids);
     }
 
-    @PostMapping("/deleteImages")
-    public void deleteImages(@RequestBody List<Integer> imageIds) {
-        imageService.deleteImagesWithId(imageIds);
-    }
-
-    @GetMapping("/directoryTree")
-    public Mono<Directory> getDirectoryTree() {
-        return imageService.getDirectoryTree()
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No directory tree found")));
-    }
-
-    @PostMapping("/directoryTree")
-    public void postDirectoryTree(@RequestBody Directory directory) {
-        imageService.mergeToDirectoryTree(directory);
-    }
-
-    @PostMapping("/moveImages")
+    @PostMapping("/transfer")
     public void moveImagesToDirectory(@RequestBody List<Integer> imageIds, @RequestParam String directoryPath) {
         imageService.moveImagesToDirectory(imageIds, directoryPath);
     }

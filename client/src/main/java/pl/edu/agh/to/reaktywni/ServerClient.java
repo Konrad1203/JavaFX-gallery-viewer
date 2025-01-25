@@ -72,16 +72,15 @@ public class ServerClient {
 
     public Mono<ZipDataExtractor.Directory> getDirectoryTree() {
         return webClient.get()
-                .uri("/images/directoryTree")
+                .uri("/directory-tree")
                 .retrieve()
                 .bodyToMono(ZipDataExtractor.Directory.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "getDirectoryTreeError: " + e.getMessage()));
     }
 
     public void deleteDirectoryWithImages(String directoryPath) {
-        webClient.post()
-                .uri("/images/deleteDirectory")
-                .bodyValue(directoryPath)
+        webClient.delete()
+                .uri("/directory-tree?directoryPath={directoryPath}", directoryPath)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "deleteDirectoryWithImagesError: " + e.getMessage()))
@@ -89,9 +88,8 @@ public class ServerClient {
     }
 
     public void deleteImagesWithId(List<Integer> imageIds) {
-        webClient.post()
-                .uri("/images/deleteImages")
-                .bodyValue(imageIds)
+        webClient.delete()
+                .uri("/images?ids={ids}", convertListToString(imageIds))
                 .retrieve()
                 .bodyToMono(Void.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "deleteImagesWithIdError: " + e.getMessage()))
@@ -100,7 +98,7 @@ public class ServerClient {
 
     public void postDirectoryTree(ZipDataExtractor.Directory directory) {
         webClient.post()
-                .uri("/images/directoryTree")
+                .uri("/directory-tree")
                 .bodyValue(directory)
                 .retrieve()
                 .bodyToMono(Void.class)
@@ -110,7 +108,7 @@ public class ServerClient {
 
     public void moveSelectedImagesToDirectory(List<Integer> imageIds, String directoryPath) {
         webClient.post()
-                .uri("/images/moveImages?directoryPath={directoryPath}", directoryPath)
+                .uri("/images/transfer?directoryPath={directoryPath}", directoryPath)
                 .bodyValue(imageIds)
                 .retrieve()
                 .bodyToMono(Void.class)

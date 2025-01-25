@@ -1,4 +1,4 @@
-package pl.edu.agh.to.reaktywni.util;
+package pl.edu.agh.to.reaktywni.directory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

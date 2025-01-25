@@ -9,7 +9,7 @@ import pl.edu.agh.to.reaktywni.thumbnail.Thumbnail;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailRepository;
 import pl.edu.agh.to.reaktywni.thumbnail.ThumbnailSize;
 import pl.edu.agh.to.reaktywni.util.Base64ImageDataCodec;
-import pl.edu.agh.to.reaktywni.util.Directory;
+import pl.edu.agh.to.reaktywni.directory.Directory;
 import pl.edu.agh.to.reaktywni.util.JsonFileReaderWriter;
 import pl.edu.agh.to.reaktywni.util.Resizer;
 import reactor.core.publisher.Flux;
@@ -117,7 +117,7 @@ public class ImageService {
     }
 
     @Transactional
-    public void deleteImagesFromDirectory(String directoryPath) {
+    public void deleteDirectoryWithImages(String directoryPath) {
         List<Integer> ids = imageRepository.findAllIdsByDirectoryPath(directoryPath);
         deleteImagesWithId(ids);
         removeDirectoryFromTree(directoryPath);
