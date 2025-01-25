@@ -32,23 +32,25 @@ public class ImageService {
     private final ImageRepository imageRepository;
     private final ThumbnailRepository thumbnailRepository;
     private final Resizer imageResizer;
+    private final JsonFileReaderWriter jsonFileReaderWriter;
 
     private final Directory directoryTree;
 
-    public ImageService(ImageRepository imageRepository, ThumbnailRepository thumbnailRepository, Resizer imageResizer) {
+    public ImageService(ImageRepository imageRepository, ThumbnailRepository thumbnailRepository, Resizer imageResizer, JsonFileReaderWriter jsonFileReaderWriter) {
         this.imageRepository = imageRepository;
         this.thumbnailRepository = thumbnailRepository;
         this.imageResizer = imageResizer;
+        this.jsonFileReaderWriter = jsonFileReaderWriter;
 
         Directory tempDirectoryTree;
         try {
-            String json = JsonFileReaderWriter.read();
+            String json = jsonFileReaderWriter.read();
             tempDirectoryTree = Directory.parseFromJson(json);
         } catch (IOException e) {
             logger.log(Level.WARNING, "Error reading directory tree from file: " + e.getMessage());
             tempDirectoryTree = Directory.createRoot();
             try {
-                JsonFileReaderWriter.write(tempDirectoryTree.toJson());
+                jsonFileReaderWriter.write(tempDirectoryTree.toJson());
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Failed to save empty Root to file: " + ex.getMessage());
             }
@@ -132,7 +134,7 @@ public class ImageService {
     private void removeDirectoryFromTree(String directoryPath) {
         directoryTree.removeDirectory(directoryPath);
         try {
-            JsonFileReaderWriter.write(directoryTree.toJson());
+            jsonFileReaderWriter.write(directoryTree.toJson());
         } catch (IOException e) {
             logger.log(Level.WARNING, "Error writing directory tree to file: " + e.getMessage());
         }
@@ -143,7 +145,7 @@ public class ImageService {
             try {
                 Directory directoryFromClient = Directory.parseFromJson(new String(image.getData()));
                 directoryTree.merge(directoryFromClient);
-                JsonFileReaderWriter.write(directoryTree.toJson());
+                jsonFileReaderWriter.write(directoryTree.toJson());
             } catch (JsonProcessingException e) {
                 logger.log(Level.WARNING, "Error parsing directory data packet: " + e.getMessage());
             } catch (IOException e) {
@@ -297,7 +299,7 @@ public class ImageService {
         logger.info("Received directory: " + directory);
         directoryTree.merge(directory);
         try {
-            JsonFileReaderWriter.write(directoryTree.toJson());
+            jsonFileReaderWriter.write(directoryTree.toJson());
         } catch (IOException e) {
             logger.log(Level.WARNING, "Error writing directory tree to file: " + e.getMessage());
         }
