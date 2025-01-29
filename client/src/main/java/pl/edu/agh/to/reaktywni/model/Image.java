@@ -55,13 +55,5 @@ public class Image {
                 .directoryPath(image.getDirectoryPath())
                 .build();
     }
-
-    public static Image createDirectoryDataPacket(String directoryJson) {
-        return Image.builder()
-                .id(-123)
-                .imageState(ImageState.DIR_DATA_PACKET)
-                .data(directoryJson.getBytes())
-                .build();
-    }
 }
 

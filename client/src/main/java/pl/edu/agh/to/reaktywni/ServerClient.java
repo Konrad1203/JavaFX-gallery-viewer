@@ -103,11 +103,11 @@ public class ServerClient {
                 .retrieve()
                 .bodyToMono(Void.class)
                 .doOnError(e -> logger.log(Level.SEVERE, "postDirectoryTreeError: " + e.getMessage()))
-                .subscribe();
+                .block();
     }
 
     public void moveSelectedImagesToDirectory(List<Integer> imageIds, String directoryPath) {
-        webClient.post()
+        webClient.patch()
                 .uri("/images/transfer?directoryPath={directoryPath}", directoryPath)
                 .bodyValue(imageIds)
                 .retrieve()

@@ -41,7 +41,7 @@ public class ImageController {
         imageService.deleteImagesWithId(ids);
     }
 
-    @PostMapping("/transfer")
+    @PatchMapping("/transfer")
     public void moveImagesToDirectory(@RequestBody List<Integer> imageIds, @RequestParam String directoryPath) {
         imageService.moveImagesToDirectory(imageIds, directoryPath);
     }

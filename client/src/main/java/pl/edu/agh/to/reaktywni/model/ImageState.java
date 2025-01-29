@@ -5,5 +5,4 @@ public enum ImageState {
     PENDING,
     SUCCESS,
     FAILURE,
-    DIR_DATA_PACKET,
 }

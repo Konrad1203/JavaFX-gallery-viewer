@@ -1,6 +1,5 @@
 package pl.edu.agh.to.reaktywni.GUI;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -45,6 +44,7 @@ public class ImageGalleryPresenter {
     private Stage selectionStage;
 
     private List<Image> clientImagesToSend;
+    private ZipDataExtractor.Directory directoryToSend;
     private ThumbnailSize thumbnailsSize;
     private final List<ImageVBox> imageVBoxes = new ArrayList<>();
     private final List<ImageVBox> emptyImageVBoxes = new LinkedList<>();
@@ -374,17 +374,11 @@ public class ImageGalleryPresenter {
         if (file != null) {
             try {
                 ZipDataExtractor.ZipData zipData = ZipDataExtractor.extractZipData(file);
-                addDirectoryToTreeView(zipData.directory());
+                directoryToSend = zipData.directory();
                 if (zipData.images().isEmpty()) filesSelectedLabel.setText("Selected zip file has no images!");
                 else {
                     clientImagesToSend = zipData.images();
                     filesSelectedLabel.setText("Selected zip file with " + clientImagesToSend.size() + " images");
-                    try {
-                        String json = zipData.directory().toJson();
-                        clientImagesToSend.addFirst(Image.createDirectoryDataPacket(json));
-                    } catch (JsonProcessingException e) {
-                        logger.log(Level.SEVERE, "Json processing error: " + e.getMessage());
-                    }
                 }
                 filesSelectedLabel.setVisible(true);
             } catch (IOException e) {
@@ -435,7 +429,15 @@ public class ImageGalleryPresenter {
         if (!scrolledToEnd && processingThreads.get() == 1) scrollToEnd();
         int startCount = imageVBoxes.size();
 
+        if (directoryToSend != null) {
+            imagePipeline.postDirectoryTree(directoryToSend);
+            addDirectoryToTreeView(directoryToSend);
+            directoryToSend = null;
+        }
+
         List<Image> imagesCopy = clientImagesToSend.stream().map(Image::copyOf).toList();
+        clientImagesToSend = null;
+        filesSelectedLabel.setVisible(false);
         List<Image> filteredImages = imagesCopy.stream()
                 .filter(image -> selectedDirectoryPath.equals(image.getDirectoryPath()))
                 .toList();
@@ -445,25 +447,12 @@ public class ImageGalleryPresenter {
         addNamedPlaceholdersToGrid(filteredImagesNames);
 
         imagePipeline.sendAndReceiveImages(imagesCopy, thumbnailsSize.toString(), selectedDirectoryPath)
-                .filter(this::filterAndProcessDirDataPacket)
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe(
                         image -> replacePlaceholderWithImage(image, image.getGridId()),
                         this::handleServerError,
                         processingThreads::decrementAndGet
                 );
-    }
-
-    private boolean filterAndProcessDirDataPacket(Image image) {
-        if (ImageState.DIR_DATA_PACKET.equals(image.getImageState())) {
-            try {
-                addDirectoryToTreeView(ZipDataExtractor.Directory.parseFromJson(new String(image.getData())));
-            } catch (JsonProcessingException e) {
-                logger.warning("Failed to process directory data packet: " + e.getMessage());
-            }
-            return false;
-        }
-        return true;
     }
 
     private void handleServerError(Throwable e) {

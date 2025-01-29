@@ -1,7 +1,5 @@
 package pl.edu.agh.to.reaktywni.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import pl.edu.agh.to.reaktywni.model.Image;
 
 import javax.imageio.ImageIO;
@@ -55,16 +53,6 @@ public interface ZipDataExtractor {
         public String toString() {
             if (subdirectories.isEmpty()) return name;
             else return name + ": " + subdirectories;
-        }
-
-        public String toJson() throws JsonProcessingException {
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(this);
-        }
-
-        public static Directory parseFromJson(String json) throws JsonProcessingException {
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(json, ZipDataExtractor.Directory.class);
         }
 
         @Override

@@ -1,7 +1,6 @@
 package pl.edu.agh.to.reaktywni.image;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -92,11 +91,9 @@ public class ImageService {
     }
 
     public Flux<Image> processImages(Flux<Image> images, String size, String directoryPath) {
-
-        Flux<Image> thumbnails = images
+        return images
                 .doOnNext(Base64ImageDataCodec::decode)
                 .doOnNext(this::logImageData)
-                .filter(this::filterAndProcessDirDataPacket)
                 .map(imageRepository::save)
                 .doOnNext(image -> logger.log(Level.INFO, "Image saved: " + image.getName() + " | Directory Path: " + image.getDirectoryPath()))
                 .doOnNext(this::saveEmptyThumbnails)
@@ -107,15 +104,6 @@ public class ImageService {
                 .doOnNext(this::logProcessedData)
                 .filter(image -> image.getDirectoryPath().equals(directoryPath))
                 .doOnNext(Base64ImageDataCodec::encode);
-
-        try {
-            return Flux.just(Image.createDirectoryDataPacket(directoryTree.toJson()))
-                    .doOnNext(Base64ImageDataCodec::encode)
-                    .concatWith(thumbnails);
-        } catch (JsonProcessingException e) {
-            logger.log(Level.SEVERE, "Error creating directory data packet: " + e.getMessage());
-            return thumbnails;
-        }
     }
 
     @Transactional
@@ -140,22 +128,6 @@ public class ImageService {
         }
     }
 
-    private boolean filterAndProcessDirDataPacket(Image image) {
-        if (ImageState.DIR_DATA_PACKET.equals(image.getImageState())) {
-            try {
-                Directory directoryFromClient = Directory.parseFromJson(new String(image.getData()));
-                directoryTree.merge(directoryFromClient);
-                jsonFileReaderWriter.write(directoryTree.toJson());
-            } catch (JsonProcessingException e) {
-                logger.log(Level.WARNING, "Error parsing directory data packet: " + e.getMessage());
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "Error writing directory data packet to file: " + e.getMessage());
-            }
-            return false;
-        } else {
-            return true;
-        }
-    }
     private void saveEmptyThumbnails(Image image) {
         thumbnailRepository.saveAll(
                 Arrays.stream(ThumbnailSize.values())
