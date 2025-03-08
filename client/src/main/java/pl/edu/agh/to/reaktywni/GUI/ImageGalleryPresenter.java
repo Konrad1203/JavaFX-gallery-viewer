@@ -199,7 +199,7 @@ public class ImageGalleryPresenter {
                 .block();
         if (imageList == null) { logger.warning("Failed to load new thumbnails page!"); return; }
         pagesDownloaded++;
-        if (imageList.size() != thumbnailsSize.getPageSize()) scrolledToEnd = true;
+        if (imageList.size() != thumbnailsSize.getPageSize() || imageList.isEmpty()) scrolledToEnd = true;
         imageList.forEach(image -> replacePlaceholderWithImage(image, addPlaceholderToGrid("Placing...")));
     }
 
